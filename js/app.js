@@ -18,7 +18,6 @@ document.addEventListener('alpine:init', () => {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const text = await res.text();
         this.data = JSON.parse(text);
-        rewriteUrls(this.data);
       } catch (e) {
         console.error('[HC Garden] Init error:', e);
         this.error = 'Failed to load data. Please refresh.';
