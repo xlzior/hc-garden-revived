@@ -4,6 +4,7 @@ document.addEventListener('alpine:init', () => {
     imageLoaded: false,
     imageWidth: 0,
     imageHeight: 0,
+    _lastUrl: '',
 
     get params() {
       return Alpine.store('app')._routeParams || {};
@@ -22,15 +23,19 @@ document.addEventListener('alpine:init', () => {
     },
 
     init() {
-      if (this.imageUrl) {
-        const img = new Image();
-        img.onload = () => {
-          this.imageWidth = img.naturalWidth;
-          this.imageHeight = img.naturalHeight;
-          this.imageLoaded = true;
-        };
-        img.src = this.imageUrl;
-      }
+      this.$watch('imageUrl', (url) => {
+        if (url && url !== this._lastUrl) {
+          this._lastUrl = url;
+          this.imageLoaded = false;
+          const img = new Image();
+          img.onload = () => {
+            this.imageWidth = img.naturalWidth;
+            this.imageHeight = img.naturalHeight;
+            this.imageLoaded = true;
+          };
+          img.src = url;
+        }
+      });
     },
 
     getDetails(pointName) {
