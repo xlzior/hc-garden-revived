@@ -117,16 +117,16 @@
             <div class="relative inline-block" style="width:100%;">
               <img :src="imageUrl" :alt="title" class="w-full" @load="imageLoaded = true">
               <template x-for="(point, index) in points" :key="index">
-                <template x-if="point.name && point.name !== 'MISSING INFO'">
-                  <template x-if="point.name.includes('fauna')">
+                <div x-show="point.name && point.name !== 'MISSING INFO'">
+                  <template x-if="point.name && point.name.includes('fauna')">
                     <div :style="getHotspotStyle(point)" @click="viewSpecies(point.name)" class="cursor-pointer">
                       <img :src="getDetails(point.name)?.smallImage || ''" class="w-full h-full rounded-full border-2 border-white object-cover" @error="$event.target.style.display='none'">
                     </div>
                   </template>
-                  <template x-if="!point.name.includes('fauna')">
+                  <template x-if="point.name && !point.name.includes('fauna')">
                     <div :style="getFloraHotspotStyle(point)" @click="viewSpecies(point.name)" class="cursor-pointer"></div>
                   </template>
-                </template>
+                </div>
               </template>
             </div>
           </template>
@@ -206,40 +206,44 @@
 
       <!-- SPECIES DETAIL -->
       <div x-show="$store.app.currentRoute === 'species'" x-transition.opacity x-data="ffEntry">
-        <!-- Image -->
-        <template x-if="imageRef && imageRef.length > 0">
-          <div>
-            <div class="cursor-pointer" @click="openLightbox(0)">
-              <img :src="Array.isArray(imageRef) ? imageRef[0] : imageRef" :alt="name" class="w-full" loading="lazy" @error="$event.target.style.display='none'">
-            </div>
-            <template x-if="Array.isArray(imageRef) && imageRef.length > 1">
-              <div class="flex items-center px-4 py-3 border-b border-gray-100 cursor-pointer" @click="openLightbox(0)">
-                <span class="material-icons text-gray-400 mr-2" style="font-size:20px;">images</span>
-                <span class="flex-1 text-base text-gray-600">Image gallery</span>
-                <span class="material-icons text-gray-400">chevron_right</span>
+        <div class="species-detail-layout">
+          <!-- Image -->
+          <div class="species-image">
+            <template x-if="imageRef && imageRef.length > 0">
+              <div>
+                <div class="cursor-pointer" @click="openLightbox(0)">
+                  <img :src="Array.isArray(imageRef) ? imageRef[0] : imageRef" :alt="name" class="w-full" loading="lazy" @error="$event.target.style.display='none'">
+                </div>
+                <template x-if="Array.isArray(imageRef) && imageRef.length > 1">
+                  <div class="flex items-center px-4 py-3 border-b border-gray-100 cursor-pointer" @click="openLightbox(0)">
+                    <span class="material-icons text-gray-400 mr-2" style="font-size:20px;">images</span>
+                    <span class="flex-1 text-base text-gray-600">Image gallery</span>
+                    <span class="material-icons text-gray-400">chevron_right</span>
+                  </div>
+                </template>
               </div>
             </template>
           </div>
-        </template>
 
-        <!-- Details -->
-        <div class="p-5 pb-24">
-          <h2 class="text-2xl font-medium text-gray-700 mt-2" x-text="name"></h2>
-          <p class="text-sm text-gray-600 mt-1" x-html="formattedSciName"></p>
-          <p class="text-base text-gray-600 font-light mt-4 text-justify whitespace-pre-line" x-text="description"></p>
+          <!-- Details -->
+          <div class="species-info p-5 pb-24">
+            <h2 class="text-2xl font-medium text-gray-700 mt-2" x-text="name"></h2>
+            <p class="text-sm text-gray-600 mt-1" x-html="formattedSciName"></p>
+            <p class="text-base text-gray-600 font-light mt-4 text-justify whitespace-pre-line" x-text="description"></p>
 
-          <!-- Locations -->
-          <template x-if="locationList.length > 0">
-            <div class="mt-6">
-              <h3 class="text-lg font-medium text-gray-700">Locations: </h3>
-              <template x-for="loc in locationList" :key="loc.id">
-                <div class="flex items-center py-3 border-b border-gray-100 cursor-pointer" @click="goToLocation(loc.id)" style="padding-left:15px;">
-                  <span class="flex-1 text-base text-gray-700" x-text="loc.title"></span>
-                  <span class="material-icons text-gray-400">chevron_right</span>
-                </div>
-              </template>
-            </div>
-          </template>
+            <!-- Locations -->
+            <template x-if="locationList.length > 0">
+              <div class="mt-6">
+                <h3 class="text-lg font-medium text-gray-700">Locations: </h3>
+                <template x-for="loc in locationList" :key="loc.id">
+                  <div class="flex items-center py-3 border-b border-gray-100 cursor-pointer" @click="goToLocation(loc.id)" style="padding-left:15px;">
+                    <span class="flex-1 text-base text-gray-700" x-text="loc.title"></span>
+                    <span class="material-icons text-gray-400">chevron_right</span>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
         </div>
 
         <!-- Lightbox -->

@@ -140,3 +140,33 @@ img.onerror-fallback {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* PWA landscape mode */
+@media (display-mode: standalone) and (orientation: landscape) {
+  header {
+    height: 40px !important;
+  }
+  main {
+    padding-top: 40px !important;
+  }
+  #map-container {
+    height: calc(100vh - 40px);
+  }
+  #map-legend {
+    max-height: 120px;
+  }
+  .species-detail-layout {
+    display: flex;
+    gap: 1rem;
+  }
+  .species-detail-layout .species-image {
+    flex: 0 0 40%;
+    max-height: calc(100vh - 40px);
+    overflow: hidden;
+  }
+  .species-detail-layout .species-info {
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 40px);
+  }
+}
