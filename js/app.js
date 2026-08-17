@@ -82,24 +82,20 @@ document.addEventListener('alpine:init', () => {
 
     _resolveOverviewParams(parsed) {
       if (!this.data || !this.data['map']) return;
-      const { id } = parsed;
-      // id is like "route-01", need to find which trail it belongs to
-      for (let trailId in this.data['map']) {
-        let trail = this.data['map'][trailId];
-        if (trail.route && trail.route[id]) {
-          let route = trail.route[id];
-          this._routeParams = {
-            title: route.title,
-            url: route.imageRef,
-            points: (route.points || []).map(p => ({
-              ...p,
-              ...(p.params || {}),
-              name: p.params ? p.params.name : undefined
-            }))
-          };
-          this.headerTitle = route.title;
-          return;
-        }
+      const { trailId, routeId } = parsed;
+      const trail = this.data['map'][trailId];
+      if (trail && trail.route && trail.route[routeId]) {
+        let route = trail.route[routeId];
+        this._routeParams = {
+          title: route.title,
+          url: route.imageRef,
+          points: (route.points || []).map(p => ({
+            ...p,
+            ...(p.params || {}),
+            name: p.params ? p.params.name : undefined
+          }))
+        };
+        this.headerTitle = route.title;
       }
     },
 

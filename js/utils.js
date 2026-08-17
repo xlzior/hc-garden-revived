@@ -91,8 +91,8 @@ function parseRoute(hash) {
   hash = hash.replace(/^#/, '');
   const parts = hash.split('/');
   if (parts[0] === 'map') {
-    if (parts[1] === 'overview' && parts[2]) {
-      return { screen: 'overview', parent: 'map', id: parts[2] };
+    if (parts[1] === 'overview' && parts[2] && parts[3]) {
+      return { screen: 'overview', parent: 'map', trailId: parts[2], routeId: parts[3] };
     }
     return { screen: 'map' };
   }

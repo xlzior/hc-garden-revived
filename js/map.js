@@ -103,7 +103,7 @@ document.addEventListener('alpine:init', () => {
             ...(p.params || {}),
             name: p.params ? p.params.name : undefined
           })),
-          hash: '#map/overview/' + routeId
+          hash: '#map/overview/' + trailId + '/' + routeId
         });
       });
     },
