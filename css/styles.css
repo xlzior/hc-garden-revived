@@ -1,0 +1,142 @@
+@font-face {
+  font-family: 'Precious';
+  src: url('../assets/fonts/Precious.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.leaflet-container {
+  z-index: 0;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.leaflet-popup-content {
+  margin: 10px;
+  min-width: 120px;
+}
+
+.sidebar-open {
+  overflow: hidden;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 40;
+}
+
+.sidebar-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100%;
+  background: white;
+  z-index: 50;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+}
+
+.sidebar-panel.open {
+  transform: translateX(0);
+}
+
+.pulse-circle {
+  position: absolute;
+  border: 3px solid gold;
+  border-radius: 50%;
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+.species-image-placeholder {
+  background-color: #ededed;
+  width: 100%;
+  min-height: 100px;
+}
+
+.historical-image-container {
+  background-color: #DBDBDB;
+  width: 100%;
+}
+
+img.onerror-fallback {
+  background-color: #ededed;
+}
+
+#map-container {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 56px);
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+#map-legend {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-overlay img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+}
+
+.filter-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: white;
+  overflow-y: auto;
+}
+
+.filter-dialog::backdrop {
+  background: rgba(0,0,0,0.5);
+}
+
+.text-justify {
+  text-align: justify;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
