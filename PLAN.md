@@ -15,100 +15,204 @@
 
 ## Architecture
 
-**Single-page app (SPA)** with hash-based routing:
+**Single-page app (SPA)** using Alpine.js for reactivity, Tailwind CSS for styling, Leaflet for maps.
+
+All via CDN — zero build tools, zero `npm install`. Push to GitHub Pages and it works.
+
+### CDN Dependencies
+
+| Library | CDN | Purpose |
+|---|---|---|
+| Alpine.js 3.x | `cdn.jsdelivr.net/npm/[email protected]/dist/cdn.min.js` | Reactive UI |
+| Tailwind CSS 4.x | `cdn.jsdelivr.net/npm/@tailwindcss/browser@4` | Utility-first CSS |
+| Leaflet 1.9 | `unpkg.com/leaflet@1.9/dist/leaflet.js` + CSS | Interactive map |
+| Google Fonts | Lato (400, 400i, 700) | Typography |
+| Material Icons | `fonts.googleapis.com/icon?family=Material+Icons` | Icons (matching NativeBase) |
+
+### File Structure
 
 ```
-index.html              — main entry point, loads all CSS/JS
-css/styles.css          — all styling
-js/app.js               — core SPA logic, routing, data loading
-js/map.js               — Leaflet map implementation
-js/components.js        — reusable UI components (navigation bar, filter modal, etc.)
-assets/                 — local images (downloaded from Imgur)
+hc-garden-revived/
+├── index.html                    — single entry point, all sections
+├── .nojekyll                     — tells GitHub Pages to skip Jekyll
+├── css/
+│   └── styles.css                — custom styles (animations, overrides)
+├── js/
+│   ├── app.js                    — Alpine init, data loading, routing, stores
+│   ├── map.js                    — Leaflet map setup, markers, polygons
+│   ├── components/
+│   │   ├── sidebar.js            — Alpine.data('sidebar')
+│   │   ├── filter-modal.js       — Alpine.data('filterModal')
+│   │   ├── ff-list.js            — Alpine.data('ffList') — flora/fauna list
+│   │   ├── ff-entry.js           — Alpine.data('ffEntry') — species detail
+│   │   ├── lightbox.js           — Alpine.data('lightbox') — image gallery
+│   │   ├── clickable-image.js    — Alpine.data('clickableImage') — hotspots
+│   │   └── overview.js           — Alpine.data('overview') — trail point view
+│   └── utils.js                  — helpers (Haversine, formatSciName, imgur URL)
+├── assets/                       — downloaded images (from Imgur)
+│   ├── maps/
+│   │   └── map_all.png           — campus map overlay
+│   ├── fonts/
+│   │   └── Precious.ttf          — decorative font
+│   └── *.jpg, *.png              — species & location photos
+└── data.json                     — Firebase data dump
 ```
 
-**No build tools required** — pure vanilla HTML/CSS/JS, directly deployable to GitHub Pages.
+### Why This Structure
+
+- **One HTML file**: all sections are `<div>` blocks toggled by Alpine's `x-show`. No routing library needed — just Alpine state.
+- **Component files separate**: each `Alpine.data()` component lives in its own JS file under `js/components/`. Keeps logic isolated and maintainable.
+- **Stores for shared state**: `Alpine.store()` for data that multiple components need (the loaded data, current route, markers).
+- **No build step**: all JS files are loaded via `<script>` tags. Alpine and Tailwind run from CDN.
+
+---
+
+## Alpine.js Conventions Used
+
+### 1. `Alpine.data()` for Reusable Components
+
+Each component is registered as a named data function:
+
+```js
+// js/components/sidebar.js
+document.addEventListener('alpine:init', () => {
+  Alpine.data('sidebar', () => ({
+    open: false,
+    toggle() { this.open = !this.open },
+    navigate(hash) {
+      window.location.hash = hash
+      this.open = false
+    }
+  }))
+})
+```
+
+```html
+<div x-data="sidebar">
+  <button @click="toggle">Menu</button>
+  <nav x-show="open" x-transition>
+    <a @click.prevent="navigate('#home')" href="#home">Home</a>
+  </nav>
+</div>
+```
+
+### 2. `Alpine.store()` for Global State
+
+Shared data (the loaded Firebase JSON, current route, map markers) lives in stores:
+
+```js
+// js/app.js
+Alpine.store('app', {
+  data: null,
+  currentRoute: 'home',
+  markers: {},
+  async init() {
+    const res = await fetch('data.json')
+    this.data = await res.json()
+  }
+})
+```
+
+Accessible anywhere via `$store.app.data`, `$store.app.currentRoute`, etc.
+
+### 3. `x-data` Scoped Tightly
+
+Each interactive section gets its own `x-data`. No giant `<body x-data="...">` — Alpine scans children for directives, so tighter scoping = faster init.
+
+### 4. `init()` for Component Setup
+
+Components use Alpine's `init()` lifecycle hook for initialization (fetching data, setting up geolocation, etc.).
+
+### 5. Private Members with `_` Prefix
+
+Internal-only properties/methods prefixed with `_` to signal "don't use from HTML":
+
+```js
+Alpine.data('ffList', () => ({
+  items: [],       // public — used in template
+  _haversine(...) { ... }  // private — only used in JS
+}))
+```
 
 ---
 
 ## Screen Mapping (React Native → HTML)
 
-| React Native Screen | HTML Equivalent |
-|---|---|
-| DrawerNavigator | Sidebar menu (slide-out from left) |
-| HomeScreen | `#home` section — hero image, title, "Let's Go!" button |
-| Introduction | `#introduction` section — static text |
-| Map | `#map` section — Leaflet map with custom overlay, markers, polygons |
-| Overview (ClickableImage) | `#overview` section — image with CSS-animated hotspots |
-| FFList | `#flora-fauna` section — search bar + filterable list + circle buttons |
-| FFEntry | `#species` section — detail view with image gallery, description, location links |
-| History | `#history` section — scrollable photo gallery |
-| CommitteeMessage | `#committee-message` section — static text |
-| Acknowledgements | `#acknowledgements` section — static text |
-| References | `#references` section — static text |
-| FilterModal | Modal (`<dialog>`) with type/trail/sort checkboxes and radio buttons |
+| React Native Screen | HTML Section | Alpine Component |
+|---|---|---|
+| DrawerNavigator | Sidebar (always in DOM) | `sidebar` |
+| HomeScreen | `<div id="home">` | — (static) |
+| Introduction | `<div id="introduction">` | — (static) |
+| Map | `<div id="map">` | `overview` (for map state) |
+| Overview (ClickableImage) | `<div id="overview">` | `clickableImage` |
+| FFList | `<div id="flora-fauna">` | `ffList` |
+| FFEntry | `<div id="species">` | `ffEntry` |
+| History | `<div id="history">` | — (static + lazy images) |
+| CommitteeMessage | `<div id="committee-message">` | — (static) |
+| Acknowledgements | `<div id="acknowledgements">` | — (static) |
+| References | `<div id="references">` | — (static) |
+| FilterModal | `<dialog id="filter-modal">` | `filterModal` |
 
 ---
 
 ## Key Technical Decisions
 
-### 1. Map Library: Leaflet.js (CDN)
+### 1. Map: Leaflet.js (CDN)
 
-- Lightweight (~40KB), no build step needed
-- Supports custom image overlays, markers, polygons
-- Free tile layer (OpenStreetMap) — no API key needed
-- The existing `assets/maps/map_all.png` overlay will be used with `L.imageOverlay()`
-- Trail markers → `L.marker()` with colored icons
-- Fauna markers → `L.marker()` with custom circular icons
+- Custom image overlay via `L.imageOverlay('assets/maps/map_all.png', bounds)`
+- Trail markers → `L.marker()` with `L.divIcon()` for colored circles
+- Fauna markers → `L.marker()` with circular image icons
 - Bird habitat polygons → `L.polygon()` with translucent blue fill
-- **Polygon toggle**: pressing a fauna marker toggles its polygon visibility (only one shown at a time)
-- Legend → HTML panel below the map with `fitBounds()` on click
+- **Polygon toggle**: clicking a fauna marker shows its polygon, hides others (only one at a time)
+- Legend → HTML panel below map, clicking a trail calls `map.fitBounds(trailBounds)`
+- Map state managed by Alpine store, markers array stored for cross-section navigation
 
-### 2. Navigation: Hash-based routing with nested routes
+### 2. Navigation: Hash-based with Alpine Store
 
-- `window.addEventListener('hashchange', ...)` to switch visible sections
-- Each screen = a `<div>` with `display: none` by default
-- Sidebar menu toggles visibility
+- `Alpine.store('app').currentRoute` tracks current section
+- `window.addEventListener('hashchange', ...)` updates the store
+- Sections toggled via `x-show="$store.app.currentRoute === 'home'"`
 - **Nested routes** for stack navigation:
   - `#map` → `#map/overview/<location-id>` → `#species/<species-id>`
   - `#flora-fauna` → `#species/<species-id>`
-- Back navigation via hash changes
+- Back navigation: changing hash triggers route update
 
-### 3. Data Loading: Fetch from local JSON
+### 3. Data Loading: Fetch from Local JSON
 
-- `fetch('data.json')` on page load
-- **URL rewriting**: Imgur URLs in `data.json` will be rewritten to local `assets/` paths during a preprocessing step
+- `fetch('data.json')` on page load, stored in `Alpine.store('app').data`
+- **URL rewriting**: a `rewriteUrls(data)` utility replaces Imgur URLs with local `assets/` paths
 - All data available client-side for filtering/sorting
 
 ### 4. Geolocation: Browser Geolocation API
 
-- `navigator.geolocation.watchPosition()` for live distance tracking
-- Haversine formula ported from JS (already pure math)
-- Fallback: hide distance sort if location unavailable
+- `navigator.geolocation.watchPosition()` in the `ffList` component's `init()`
+- Haversine formula in `utils.js`
+- Fallback: hide distance sort option if location unavailable
 
-### 5. Images: Local assets
+### 5. Images: Local Assets
 
 - All images downloaded to `assets/` (Imgur filenames)
-- Imgur URLs in `data.json` will be rewritten to local paths
-- **Single size per image**: use original download size, rely on CSS `object-fit` + `width` constraints for responsive sizing
+- Responsive sizing via Tailwind classes (`w-full h-auto object-cover`)
 - Lazy loading via `loading="lazy"` on `<img>` tags
-- Graceful degradation: `<img onerror>` shows placeholder for missing images
+- Graceful degradation: `onerror` shows gray placeholder
 
 ### 6. Fonts
 
-- Lato → Google Fonts CDN (Lato Regular + Italic)
-- Precious → served locally from `hci-biodiversity/assets/Precious.ttf`
-- Roboto → not needed (was only used by NativeBase components)
+- Lato → Google Fonts CDN
+- Precious → served locally from `assets/fonts/Precious.ttf` via `@font-face`
+- No Roboto (was only used by NativeBase components)
 
-### 7. Image Gallery: Custom lightbox
+### 7. Image Gallery: Alpine Lightbox Component
 
-- Click image → fullscreen overlay with arrow navigation
-- Simple CSS + JS implementation (no library needed)
-- Handles single images and multi-image galleries
+- `Alpine.data('lightbox')` manages open/closed state, current image index, image array
+- Fullscreen overlay with arrow navigation
+- Triggered by `@click` on species images or gallery button
 
-### 8. Filter Modal: Native `<dialog>` element
+### 8. Filter Modal: HTML `<dialog>` + Alpine
 
-- Uses HTML `<dialog>` for built-in modal behavior, focus trapping, ESC-to-close
-- Simpler than building a custom modal overlay
+- `<dialog>` for built-in modal behavior (focus trapping, ESC-to-close)
+- `Alpine.data('filterModal')` manages type/trail/sort state
+- Emits filter changes to parent via Alpine store or callback
 
 ---
 
@@ -116,29 +220,29 @@ assets/                 — local images (downloaded from Imgur)
 
 ### Flora/Fauna Initial View (FFList)
 
-The default view (both types selected, no search active) shows two large circular image buttons:
-- **Flora button**: 200x200 circle with `flora.jpg` background, "Flora" text in Precious font
-- **Fauna button**: 200x200 circle with `fauna.jpg` background, "Fauna" text in Precious font
-- Clicking one filters to that type and shows the list
+Default view (both types selected, no search active) shows two large circular image buttons:
+- **Flora button**: 200x200 circle with `assets/flora.jpg` background, "Flora" text in Precious font
+- **Fauna button**: 200x200 circle with `assets/fauna.jpg` background, "Fauna" text in Precious font
+- Clicking one sets `type = { flora: true, fauna: false }` or vice versa, showing the list
 
 ### Scientific Name Formatting (FFEntry)
 
-Port `formatSciName` from `FFEntry.js:105-171`:
+Port `formatSciName` from `FFEntry.js:105-171` to `utils.js`:
 - Capitalize first letter, lowercase rest, strip trailing "L."
-- Italicize by default, with exceptions:
+- Return HTML string with `<i>` tags for italic, plain text for non-italic exceptions:
   - Words in apostrophes → non-italic
   - Words in parentheses → non-italic until closing `)`
   - `"var."` → always non-italic
 
 ### Cross-Section Navigation
 
-- **Species detail → Map**: clicking a location on a species page switches to `#map` and opens the corresponding marker's callout
-- **Map → Overview → Species**: clicking a trail marker callout opens `#map/overview/<location-id>`, clicking a hotspot opens `#species/<species-id>`
-- **Overview hotspot**: flora hotspots show pulsing gold circles, fauna hotspots show circular bird photos
+- **Species detail → Map**: clicking a location on a species page sets `$store.app.currentRoute = 'map'` and calls `openCallout(locationId)` on the map component
+- **Map → Overview → Species**: clicking a trail marker callout navigates to `#map/overview/<location-id>`, clicking a hotspot navigates to `#species/<species-id>`
+- **Overview hotspot**: flora hotspots show CSS pulsing gold circles, fauna hotspots show circular bird photos
 
 ### Edge Cases
 
-- **`MISSING INFO` hotspots**: skip rendering (original code returns null for these)
+- **`MISSING INFO` hotspots**: skip rendering (check `if (name === 'MISSING INFO')`)
 - **Empty `imageRef`**: show gray placeholder box
 - **Empty locations**: hide location links section
 
@@ -146,50 +250,99 @@ Port `formatSciName` from `FFEntry.js:105-171`:
 
 ## CSS Styling Plan
 
-Port the React Native styles from `constants/Style.js`:
+### Tailwind Utilities (in HTML)
 
-- Responsive scaling using `clamp()` or media queries (target: 375px base)
-- Color scheme: `#646D77` (titles), `#798493` (subtitles), `#636C76` (body)
-- Font sizes normalized proportionally
-- Flexbox layouts matching the original screens
-- Card styling with padding and margins
-- `<meta name="viewport">` tag for mobile web
-- Responsive breakpoints for tablet/desktop
+Most styling via Tailwind utility classes directly in `index.html`:
+- Layout: `flex`, `grid`, `items-center`, `justify-between`, `gap-4`
+- Spacing: `p-4`, `m-2`, `px-6`, `py-3`
+- Typography: `text-lg`, `font-medium`, `italic`, `text-gray-600`
+- Responsive: `sm:`, `md:`, `lg:` prefixes
+- Colors: `bg-white`, `text-gray-700`, `border-gray-200`
+
+### Custom CSS (in `css/styles.css`)
+
+Only for things Tailwind can't do:
+- `@font-face` for Precious font
+- Pulsing circle animation (`@keyframes pulse-ring`)
+- Leaflet overrides (z-index, popup styling)
+- Image overlay hotspot positioning
+- Scrollbar styling
+- Print styles (optional)
+
+### Color Mapping (from `Style.js`)
+
+| Original | Tailwind |
+|---|---|
+| `#646D77` (titles) | `text-gray-600` or custom `--color-title` |
+| `#798493` (subtitles) | `text-gray-500` |
+| `#636C76` (body) | `text-gray-600` |
+| `#ededed` (backgrounds) | `bg-gray-200` |
+| `#DBDBDB` (image bg) | `bg-gray-300` |
 
 ---
 
 ## Implementation Steps
 
-1. **Download missing images**: run `download_images.sh` to fetch any missing Imgur images
-2. **Create `index.html`** with:
+### Phase 0: Preparation
+1. Run `download_images.sh` to ensure all images are downloaded
+2. Create `rewrite-urls.js` utility to transform `data.json` Imgur URLs → local paths
+
+### Phase 1: Foundation
+3. Create `index.html` with:
    - `<meta name="viewport">` tag
-   - All section containers
-   - CDN links (Leaflet, Leaflet CSS, Google Fonts)
-   - `.nojekyll` file for GitHub Pages
-3. **Create `css/styles.css`** porting all styles from `Style.js` + layout for each screen
-4. **Create `js/app.js`** with:
-   - Data loading from `data.json`
-   - URL rewriting (Imgur → local paths)
-   - Hash-based routing with nested route support
-   - Sidebar navigation
-   - Search, filter, sort logic
-   - Haversine distance calculation
-   - Geolocation integration
-   - `formatSciName` port
-   - Cross-section navigation (species → map marker)
-5. **Create `js/map.js`** with:
-   - Leaflet map initialization
-   - Custom image overlay with correct bounds
-   - Trail marker rendering with callouts
-   - Fauna markers with polygon toggling
-   - Legend with `fitBounds()` zoom
-6. **Create `js/components.js`** with:
-   - Navigation bar component
-   - Filter modal (`<dialog>`) component
-   - Image gallery/lightbox
-   - ClickableImage hotspot component (pulsing circles + fauna photos)
-7. **Test all screens and interactions**
-8. **Set up GitHub remote and enable GitHub Pages** (source: main branch, root `/`)
+   - CDN script/link tags (Alpine, Tailwind, Leaflet, Google Fonts, Material Icons)
+   - All section containers (`<div id="home">`, `<div id="map">`, etc.)
+   - Sidebar navigation markup
+   - `.nojekyll` file
+4. Create `css/styles.css` with:
+   - `@font-face` for Precious
+   - Pulsing circle keyframes
+   - Leaflet overrides
+   - Minimal custom styles (everything else is Tailwind)
+
+### Phase 2: Core JS
+5. Create `js/utils.js` with:
+   - `haversineDistance(lat1, lon1, lat2, lon2)`
+   - `formatSciName(name)` → returns HTML string
+   - `rewriteUrls(data)` → replaces Imgur URLs with local paths
+   - `getImageUrl(filename, size?)` → builds local asset path
+6. Create `js/app.js` with:
+   - `Alpine.store('app', { data, currentRoute, markers })` — global state
+   - Hash-based routing listener
+   - Data loading + URL rewriting on init
+   - Geolocation setup
+
+### Phase 3: Components
+7. Create `js/components/sidebar.js` — drawer menu toggle + navigation
+8. Create `js/components/filter-modal.js` — type/trail/sort filters in `<dialog>`
+9. Create `js/components/ff-list.js` — flora/fauna list with search, filter, sort, circle buttons
+10. Create `js/components/ff-entry.js` — species detail with image gallery, sci-name formatting, location links
+11. Create `js/components/lightbox.js` — fullscreen image overlay
+12. Create `js/components/clickable-image.js` — hotspot image with pulsing circles
+13. Create `js/components/overview.js` — trail point detail view
+
+### Phase 4: Map
+14. Create `js/map.js` with:
+    - Leaflet map initialization
+    - Custom image overlay (`map_all.png`)
+    - Trail markers with colored `L.divIcon`
+    - Callouts with title + thumbnail
+    - Fauna markers with circular images
+    - Polygon toggle on marker press
+    - Legend with `fitBounds()` zoom
+    - Marker reference storage for cross-section navigation
+
+### Phase 5: Integration
+15. Wire all components together in `index.html`
+16. Test all screens and interactions
+17. Test cross-section navigation (species → map, map → overview → species)
+18. Test responsive behavior on mobile/tablet/desktop
+
+### Phase 6: Deploy
+19. Set up GitHub remote
+20. Push to `main`
+21. Enable GitHub Pages (source: `main`, folder: `/`)
+22. Verify site at `https://<username>.github.io/<repo-name>/`
 
 ---
 
