@@ -113,9 +113,9 @@
       <!-- OVERVIEW -->
       <div x-show="$store.app.currentRoute === 'overview'" x-transition.opacity x-data="clickableImage">
         <div class="overflow-auto">
-          <template x-if="imageLoaded && imageUrl">
+          <template x-if="imageUrl">
             <div class="relative inline-block" style="width:100%;">
-              <img :src="imageUrl" :alt="title" class="w-full" @load="imageLoaded = true">
+              <img :src="imageUrl" :alt="title" class="w-full" @load="onImageLoad($event)">
               <template x-for="(point, index) in points" :key="index">
                 <div x-show="point.name && point.name !== 'MISSING INFO'">
                   <template x-if="point.name && point.name.includes('fauna')">

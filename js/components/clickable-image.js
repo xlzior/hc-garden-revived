@@ -27,15 +27,17 @@ document.addEventListener('alpine:init', () => {
         if (url && url !== this._lastUrl) {
           this._lastUrl = url;
           this.imageLoaded = false;
-          const img = new Image();
-          img.onload = () => {
-            this.imageWidth = img.naturalWidth;
-            this.imageHeight = img.naturalHeight;
-            this.imageLoaded = true;
-          };
-          img.src = url;
+          this.imageWidth = 0;
+          this.imageHeight = 0;
         }
       });
+    },
+
+    onImageLoad(e) {
+      const el = e.target;
+      this.imageWidth = el.offsetWidth;
+      this.imageHeight = el.offsetHeight;
+      this.imageLoaded = true;
     },
 
     getDetails(pointName) {
@@ -55,7 +57,13 @@ document.addEventListener('alpine:init', () => {
       let layoutWidth = this.imageWidth || 1;
       let top = point.top * layoutHeight - point.size / 2;
       let left = point.left * layoutWidth - point.size / 2;
-      return `position:absolute;top:${top}px;left:${left}px;width:${point.size}px;height:${point.size}px;`;
+      return {
+        position: 'absolute',
+        top: top + 'px',
+        left: left + 'px',
+        width: point.size + 'px',
+        height: point.size + 'px'
+      };
     },
 
     getFloraHotspotStyle(point) {
@@ -63,7 +71,16 @@ document.addEventListener('alpine:init', () => {
       let layoutWidth = this.imageWidth || 1;
       let top = point.top * layoutHeight - point.size / 2;
       let left = point.left * layoutWidth - point.size / 2;
-      return `position:absolute;top:${top}px;left:${left}px;width:${point.size}px;height:${point.size}px;border:3px solid gold;border-radius:50%;animation:pulse-ring 2s ease-in-out infinite;`;
+      return {
+        position: 'absolute',
+        top: top + 'px',
+        left: left + 'px',
+        width: point.size + 'px',
+        height: point.size + 'px',
+        border: '3px solid gold',
+        borderRadius: '50%',
+        animation: 'pulse-ring 2s ease-in-out infinite'
+      };
     }
   }));
 });
