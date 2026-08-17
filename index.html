@@ -6,7 +6,8 @@
   <title>HC Garden - A Nature Walking Trail Guide</title>
   <meta name="description" content="Explore the rich biodiversity of Hwa Chong Institution's garden campus with interactive maps and detailed species write-ups.">
   <meta name="theme-color" content="#ffffff">
-  <link rel="icon" type="image/png" href="assets/homeimage.jpg">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/jpeg" href="assets/homeimage.jpg">
 
   <link rel="stylesheet" href="assets/fonts/google/lato.css">
   <link rel="stylesheet" href="assets/fonts/google/material-icons.css">
@@ -429,5 +430,10 @@
   <script src="js/leaflet.js"></script>
   <script src="js/map.js"></script>
   <script defer src="js/alpine.min.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('js/service-worker.js');
+    }
+  </script>
 </body>
 </html>
