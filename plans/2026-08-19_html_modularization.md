@@ -94,143 +94,96 @@ Each template is a plain HTML fragment — no `<html>`, `<head>`, or `<body>` ta
 **Example: reduced `index.html` home section**
 ```html
 <div x-show="$store.app.currentRoute === 'home'" x-transition.opacity
-     x-html="$store.app._templates.home">
+     x-html="$store.app._templates.home || ''">
 </div>
+```
+
+### How Alpine Handles Dynamic HTML in `x-html`
+
+Alpine's `x-html` directive **automatically calls `Alpine.initTree()`** on injected content. When the bound value changes, Alpine:
+1. Sets `innerHTML` on the target element
+2. Calls `initTree(el)` to scan for and initialise any Alpine directives in the new DOM
+
+This means:
+- **No manual `initTree()` calls needed** — `x-html` handles it
+- **No `destroyTree()` calls needed** — when `x-html` replaces content, the old DOM is discarded with its listeners
+- **No wrapper component needed** — `x-html` on a plain `<div>` is sufficient
+- **Nested `x-data` works** — if a template contains `<div x-data="ffList">`, `initTree` will pick it up
+
+This is verified in Alpine 3.14.9 source (the vendored `alpine.min.js`):
+```js
+d("html", (e, { expression: t }, { effect: r, evaluateLater: n }) => {
+  let i = n(t);
+  r(() => {
+    i(o => {
+      m(() => {
+        e.innerHTML = o;
+        e._x_ignoreSelf = true;
+        S(e);              // S = initTree
+        delete e._x_ignoreSelf;
+      });
+    });
+  });
+});
 ```
 
 ### Loading Strategy
 
-Templates are fetched once, cached in the Alpine store, and injected via `x-html`.
+Templates are fetched **eagerly on init**, in parallel with `data.json`. All templates are small (~5-10KB total), so fetching them upfront is negligible.
 
-**Why `x-html` and not `fetch` + `innerHTML`:**
-- `x-html` is reactive — when `$store.app._templates.home` changes, the DOM updates automatically
-- It integrates cleanly with Alpine's reactivity system
-- No manual DOM manipulation needed
+**Critical ordering:** Templates must be fetched and cached in `_templates` **before** `_handleHash()` runs. If `_handleHash()` fires before templates are loaded:
+- The `map-visible` event dispatches (via `setTimeout(100)`)
+- `mapLegend` component hasn't been initialised yet (no `#map-legend` element in DOM)
+- The `map-visible` listener is never registered
+- **The map never initialises on direct URL access** (e.g., user opens `#map` directly)
 
-**Why not `<template>` elements in index.html:**
-- That defeats the purpose — the HTML would still be in one file
-- Fetching from separate files is the only way to get true file-level separation
-
-### Alpine Lifecycle with Dynamic HTML
-
-**Critical issue:** Alpine directives inside `x-html` content are NOT automatically initialised. When Alpine injects new HTML via `x-html`, it does not scan the injected content for directives.
-
-**Solution:** After each template injection, call `Alpine.initTree(el)` on the container element. This tells Alpine to scan the newly added DOM for directives and initialise them.
-
-**Cleanup:** Before injecting a new template into a container, call `Alpine.destroyTree(el)` to clean up event listeners and watchers from the previous content. This prevents memory leaks when navigating between routes.
-
-**Timing:** `initTree` must be called _after_ Alpine has rendered the `x-html` update. Use `$nextTick()` or a short `setTimeout()` to ensure the DOM has been updated before initialising.
-
-### Modified `index.html` Route Sections
-
-Each route section becomes a thin wrapper:
-
-```html
-<!-- HOME -->
-<div x-show="$store.app.currentRoute === 'home'" x-transition.opacity
-     x-data="{ ready: false }"
-     x-effect="if ($store.app.currentRoute === 'home' && !ready && $store.app._templates.home) {
-       $nextTick(() => { Alpine.initTree($el); ready = true; })
-     }"
-     x-html="$store.app._templates.home">
-</div>
-```
-
-**However**, this has a problem: `x-effect` runs on every re-render, and `ready` would need to be reset when navigating away. A cleaner approach is to handle initialisation in a shared utility.
-
-### Cleaner Approach: Centralised Template Loader
-
-Instead of per-section `x-effect`, add a method to the Alpine store that handles fetching, caching, and initialising:
-
-```js
-// In Alpine.store('app')
-_templateCache: {},
-_templatesReady: {},
-
-async _loadTemplate(name) {
-  if (this._templateCache[name]) return this._templateCache[name];
-  try {
-    const res = await fetch(`templates/${name}.html`);
-    if (!res.ok) throw new Error(`Template ${name}: HTTP ${res.status}`);
-    const html = await res.text();
-    this._templateCache[name] = html;
-    return html;
-  } catch (e) {
-    console.error('[HC Garden] Template load error:', e);
-    return '';
-  }
-},
-
-_initTemplate(name, el) {
-  if (this._templatesReady[name]) return;
-  this._templatesReady[name] = true;
-  Alpine.initTree(el);
-},
-
-_destroyTemplate(name, el) {
-  if (!this._templatesReady[name]) return;
-  Alpine.destroyTree(el);
-  this._templatesReady[name] = false;
-}
-```
-
-**Route sections in `index.html` use `x-effect` to trigger loading:**
-
-```html
-<div x-show="$store.app.currentRoute === 'home'" x-transition.opacity
-     x-data
-     x-effect="if ($store.app.currentRoute === 'home') {
-       if (!$store.app._templateCache.home) {
-         $store.app._loadTemplate('home').then(() => {
-           $nextTick(() => $store.app._initTemplate('home', $el))
-         })
-       } else {
-         $store.app._initTemplate('home', $el)
-       }
-     }">
-</div>
-```
-
-**The `x-html` binding pulls from the cache:**
-
-```html
-<div ... x-html="$store.app._templateCache.home || ''"></div>
-```
-
-### Alternative Simpler Approach: Load All Templates on Init
-
-Since the templates are small (total ~277 lines across 10 files, ~5-10KB), load all of them eagerly on app init rather than lazily per-route:
+**Solution:** Fetch templates and `data.json` in parallel, wait for both, then call `_handleHash()`:
 
 ```js
 async init() {
-  // ... existing data.json fetch ...
-
-  // Load all templates in parallel
   const templateNames = [
     'home', 'introduction', 'map', 'overview', 'flora-fauna',
     'species', 'history', 'committee-message', 'acknowledgements', 'references'
   ];
-  const results = await Promise.all(
-    templateNames.map(name => fetch(`templates/${name}.html`).then(r => r.text()))
-  );
-  templateNames.forEach((name, i) => {
-    this._templates[name] = results[i];
+
+  // Fetch data and templates in parallel
+  const [dataRes, ...tplResults] = await Promise.allSettled([
+    fetch('data.json'),
+    ...templateNames.map(name =>
+      fetch(`templates/${name}.html`).then(r => {
+        if (!r.ok) throw new Error(`Template ${name}: HTTP ${r.status}`);
+        return r.text();
+      })
+    )
+  ]);
+
+  // Process data
+  if (dataRes.status === 'fulfilled' && dataRes.value.ok) {
+    const text = await dataRes.value.text();
+    this.data = JSON.parse(text);
+  } else {
+    this.error = 'Failed to load data. Please refresh.';
+    this.loading = false;
+    return;
+  }
+
+  // Cache templates (individual failures don't block the app)
+  tplResults.forEach((result, i) => {
+    this._templates[templateNames[i]] =
+      result.status === 'fulfilled' ? result.value : '';
   });
+
+  this.loading = false;
+  this._handleHash();   // Now safe — templates are loaded
+  window.addEventListener('hashchange', () => this._handleHash());
 }
 ```
 
-**This is the recommended approach** because:
-- Templates are small — parallel fetching adds negligible overhead
-- No lazy-loading complexity or race conditions
-- No `x-effect` boilerplate per section
-- Simpler to reason about
-- Templates are available immediately when routing starts
+Using `Promise.allSettled` ensures a template 404 doesn't block data loading or the entire app.
 
-**Trade-off:** All templates are loaded up front even if the user never visits some pages. At ~5-10KB total, this is acceptable.
+### Template Content Injection
 
-### Modified Route Sections (Simplified)
-
-With eager loading, route sections become minimal:
+With templates loaded, each route section in `index.html` is a thin wrapper:
 
 ```html
 <!-- HOME -->
@@ -238,62 +191,41 @@ With eager loading, route sections become minimal:
      x-html="$store.app._templates.home || ''">
 </div>
 
-<!-- INTRODUCTION -->
-<div x-show="$store.app.currentRoute === 'introduction'" x-transition.opacity
-     x-html="$store.app._templates.introduction || ''">
+<!-- FLORA AND FAUNA -->
+<div x-show="$store.app.currentRoute === 'flora-fauna'" x-transition.opacity
+     x-html="$store.app._templates['flora-fauna'] || ''">
 </div>
 ```
 
-**But we still need `Alpine.initTree()`** for directives inside the templates. The `|| ''` default means on first render the container is empty, then Alpine fills it. We need to call `initTree` after the content is injected.
+The `|| ''` ensures the container is empty on first render (before templates load). Once `_templates` is populated, Alpine reactivity triggers `x-html` to inject the content and `initTree` to activate directives.
 
-**Solution:** Use a global `x-effect` on `<main>` that watches the current route and initialises the active template:
+### Sections with `x-data`
 
+Three route sections have their own `x-data` attributes that must move INTO the template files:
+
+| Section | Current `x-data` | In template |
+|---|---|---|
+| Overview | `x-data="clickableImage"` | `templates/overview.html` wraps content in `<div x-data="clickableImage">` |
+| Flora & Fauna | `x-data="ffList"` | `templates/flora-fauna.html` wraps content in `<div x-data="ffList">` |
+| Species | `x-data="ffEntry"` | `templates/species.html` wraps content in `<div x-data="ffEntry">` |
+
+These components will be initialised by `initTree` when the template is injected. Since `x-show` keeps all sections in the DOM permanently, these components are initialised once and persist. Event listeners registered in `init()` (e.g., `ffList`'s `filter-changed` window listener and geolocation watcher) survive route changes because the DOM elements are never removed.
+
+### Map Section
+
+The map template (`templates/map.html`) contains:
 ```html
-<main class="pt-14 min-h-screen"
-      x-data
-      x-effect="$store.app.currentRoute; $nextTick(() => {
-        const active = $el.querySelector('[x-show*=\"currentRoute\"]:not([style*=\"display: none\"])');
-        if (active && active.innerHTML.trim() && !active._alpineInit) {
-          Alpine.initTree(active);
-          active._alpineInit = true;
-        }
-      })">
-```
-
-**Actually, the simplest reliable approach:** Wrap each route section in an `x-data` component that handles its own initialisation:
-
-```html
-<div x-data="routeSection('home')"
-     x-show="$store.app.currentRoute === 'home'"
-     x-transition.opacity
-     x-html="$store.app._templates.home || ''">
+<div id="map-container" class="relative">
+  <div id="map" class="w-full h-full"></div>
+  <div id="map-legend" class="..." x-data="mapLegend"></div>
 </div>
 ```
 
-```js
-// js/components/route-section.js
-document.addEventListener('alpine:init', () => {
-  Alpine.data('routeSection', (name) => ({
-    _initialised: false,
+When `x-html` injects this, `initTree` initialises `mapLegend`. The existing `map-visible` event listener in `mapLegend.init()` triggers map setup. Since templates are loaded before `_handleHash()`, the `map-visible` dispatch will find a listener registered. No changes needed to `js/map.js`.
 
-    init() {
-      this.$watch('$store.app.currentRoute', (route) => {
-        if (route === name && !this._initialised) {
-          this._initialised = true;
-          this.$nextTick(() => Alpine.initTree(this.$el));
-        }
-      });
-      // Check on first load too
-      if (this.$store.app.currentRoute === name && this.$store.app._templates[name]) {
-        this._initialised = true;
-        this.$nextTick(() => Alpine.initTree(this.$el));
-      }
-    }
-  }));
-});
-```
+### Filter Modal
 
-This is clean, self-contained, and handles both initial load and subsequent navigations.
+The filter modal (`<div x-data="filterModal">`) stays in `index.html`. It is global chrome, always in the DOM, toggled by `isOpen` state. No change.
 
 ## Changes Required
 
@@ -312,49 +244,25 @@ Extract the inner content of each route section `<div>` (lines inside the `x-sho
 | `templates/home.html` | 75-84 | Hero image, text, CTA button |
 | `templates/introduction.html` | 89-102 | Title, Chinese text, paragraphs |
 | `templates/map.html` | 107-110 | Map container + legend div |
-| `templates/overview.html` | 115-133 | ClickableImage with hotspots |
-| `templates/flora-fauna.html` | 138-204 | Search bar, circle buttons, list |
-| `templates/species.html` | 209-261 | Image, details, locations, lightbox |
+| `templates/overview.html` | 115-133 | Wraps in `<div x-data="clickableImage">`, hotspot content |
+| `templates/flora-fauna.html` | 138-204 | Wraps in `<div x-data="ffList">`, search bar, circle buttons, list |
+| `templates/species.html` | 209-261 | Wraps in `<div x-data="ffEntry">`, image, details, lightbox |
 | `templates/history.html` | 266-284 | Historical photos from data |
 | `templates/committee-message.html` | 289-297 | Title, quote, paragraphs |
 | `templates/acknowledgements.html` | 302-345 | Quote, paragraphs, committee list |
 | `templates/references.html` | 350-367 | Citation list |
 
-**Important:** Templates contain raw HTML with Alpine directives (`x-if`, `x-for`, `x-text`, `@click`, etc.). These directives will be activated by `Alpine.initTree()` after injection.
+Templates contain raw HTML with Alpine directives (`x-if`, `x-for`, `x-text`, `@click`, etc.). These directives are activated automatically by `x-html`'s built-in `initTree` call.
 
-### 3. Create `js/components/route-section.js`
+### 3. Modify `js/app.js`
 
-New component that handles template initialisation per route section (~15 lines).
+Add `_templates: {}` to the store. Rewrite `init()` to fetch `data.json` and all templates in parallel using `Promise.allSettled`, then call `_handleHash()`.
 
-### 4. Modify `js/app.js`
+See "Loading Strategy" section above for the complete implementation.
 
-Add to the store:
-- `_templates: {}` — template cache object
-- Template fetching in `init()` — fetch all 10 templates in parallel after loading `data.json`
+### 4. Modify `index.html`
 
-```js
-// Add to Alpine.store('app')
-_templates: {},
-
-// In init(), after data.json fetch:
-const templateNames = [
-  'home', 'introduction', 'map', 'overview', 'flora-fauna',
-  'species', 'history', 'committee-message', 'acknowledgements', 'references'
-];
-const results = await Promise.all(
-  templateNames.map(name =>
-    fetch(`templates/${name}.html`).then(r => {
-      if (!r.ok) throw new Error(`Template ${name}: HTTP ${r.status}`);
-      return r.text();
-    }).catch(e => { console.error('[HC Garden]', e); return ''; })
-  )
-);
-templateNames.forEach((name, i) => { this._templates[name] = results[i]; });
-```
-
-### 5. Modify `index.html`
-
-**Remove** the inner content of all 10 route sections. **Replace** with thin `x-html` wrappers using the `routeSection` component:
+**Remove** the inner content of all 10 route sections. **Replace** with thin `x-html` wrappers:
 
 Before:
 ```html
@@ -368,17 +276,12 @@ Before:
 
 After:
 ```html
-<div x-data="routeSection('home')"
-     x-show="$store.app.currentRoute === 'home'"
-     x-transition.opacity
+<div x-show="$store.app.currentRoute === 'home'" x-transition.opacity
      x-html="$store.app._templates.home || ''">
 </div>
 ```
 
-**Add** the new script tag:
-```html
-<script src="js/components/route-section.js"></script>
-```
+**No new script tags needed** — no `route-section.js` file.
 
 **Keep** in index.html (no changes):
 - `<head>` block
@@ -387,50 +290,45 @@ After:
 - Header bar
 - Sidebar
 - Filter modal
-- All existing script tags (plus the new one)
+- All existing script tags (unchanged)
 
-### 6. Handle `x-data` on extracted sections
+### 5. Update service worker
 
-Some route sections have their own `x-data` attributes:
-- `overview`: `x-data="clickableImage"` (line 114)
-- `flora-fauna`: `x-data="ffList"` (line 137)
-- `species`: `x-data="ffEntry"` (line 208)
+The service worker (`js/service-worker.js`) pre-caches static assets. Add the template files to the cache list so they work offline:
 
-These `x-data` attributes must move INTO the template files, since they're part of the extracted content. The `routeSection` component wraps them from the outside:
-
-```html
-<!-- index.html -->
-<div x-data="routeSection('overview')"
-     x-show="$store.app.currentRoute === 'overview'"
-     x-transition.opacity
-     x-html="$store.app._templates.overview || ''">
-</div>
+```js
+const PRE_CACHE = [
+  '/',
+  'index.html',
+  'css/styles.css',
+  'css/leaflet.css',
+  'js/app.js',
+  'js/utils.js',
+  'js/map.js',
+  'js/alpine.min.js',
+  'js/leaflet.js',
+  'js/tailwind.js',
+  // Templates
+  'templates/home.html',
+  'templates/introduction.html',
+  'templates/map.html',
+  'templates/overview.html',
+  'templates/flora-fauna.html',
+  'templates/species.html',
+  'templates/history.html',
+  'templates/committee-message.html',
+  'templates/acknowledgements.html',
+  'templates/references.html',
+];
 ```
 
-```html
-<!-- templates/overview.html -->
-<div x-data="clickableImage">
-  <div class="overflow-auto">
-    ...hotspot content...
-  </div>
-</div>
-```
+### 6. Clean up dead code
 
-**This creates nested `x-data` scopes** — `routeSection` on the outer div, `clickableImage` on the inner div. This is fine in Alpine; inner scopes inherit from outer scopes. The `clickableImage` component will be initialised by `Alpine.initTree()` when the route section activates.
-
-### 7. Handle Map Initialisation
-
-The map section (`templates/map.html`) contains `<div id="map">` and `<div id="map-legend" x-data="mapLegend">`. The Leaflet map is initialised lazily via the `map-visible` event. This mechanism is unchanged — `Alpine.initTree()` will initialise the `mapLegend` component, and the existing `map-visible` event listener will trigger map setup.
-
-No changes needed to `js/map.js`.
-
-### 8. Handle Filter Modal
-
-The filter modal (`<div x-data="filterModal">`) stays in `index.html`. It is global chrome, always in the DOM, toggled by `isOpen` state. No change.
+`js/components/overview.js` defines `Alpine.data('overview')` which is never used in the HTML — the overview section uses `x-data="clickableImage"` instead. Consider removing this file.
 
 ## Script Load Order
 
-Add the new component before Alpine:
+Unchanged — no new scripts needed:
 
 ```html
 <script src="js/utils.js"></script>
@@ -442,7 +340,6 @@ Add the new component before Alpine:
 <script src="js/components/lightbox.js"></script>
 <script src="js/components/clickable-image.js"></script>
 <script src="js/components/overview.js"></script>
-<script src="js/components/route-section.js"></script>   <!-- NEW -->
 <script src="js/leaflet.js"></script>
 <script src="js/map.js"></script>
 <script defer src="js/alpine.min.js"></script>
@@ -452,12 +349,12 @@ Add the new component before Alpine:
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| `Alpine.initTree()` not available in vendored Alpine 3.14.9 | Templates won't initialise | Check Alpine version — `initTree` was added in 3.x. If unavailable, fall back to manual DOM insertion without `x-html` |
-| `x-html` sanitises HTML (strips `<script>`, event handlers) | Alpine directives broken | Alpine's `x-html` does NOT sanitise — it sets `innerHTML` directly. Directives work fine. Verified in Alpine source. |
-| `x-transition` breaks with `x-html` | No fade effect between routes | Test transition behavior. If broken, apply transitions to the outer `routeSection` div instead |
-| Leaflet map `#map` element destroyed/recreated on route change | Map re-renders from scratch every time | Expected behavior — map was already re-initialised on `map-visible` event. No regression. |
-| Nested `x-data` scopes cause variable shadowing | Component state conflicts | Template `x-data` (e.g., `clickableImage`) is on inner elements, `routeSection` is on outer. No overlap in property names. Safe. |
-| Template fetch fails (404, network error) | Blank page section | Catch errors, log, render empty string. User sees blank section but rest of app works. |
+| Template fetch fails (404, network error) | Blank page section | `Promise.allSettled` ensures app still loads. Failed templates render as empty string. |
+| `x-transition` breaks with `x-html` | No fade effect between routes | Test transition behavior. If broken, move `x-transition` to work around it. |
+| Leaflet map `#map` element destroyed/recreated on route change | Map re-renders from scratch every time | Expected — map was already re-initialised on `map-visible` event. No regression. |
+| `ffList` geolocation watcher duplicates on re-init | Multiple watchPosition callbacks | Won't happen — `x-html`/`initTree` only initialises once per DOM insertion, and `x-show` keeps DOM alive. |
+| Nested `x-data` scopes cause variable shadowing | Component state conflicts | Template `x-data` is on inner elements. No overlap in property names with the outer div. |
+| Template loading race with `_handleHash()` | Map doesn't initialise on direct URL access | Fixed by fetching templates before `_handleHash()` (see "Loading Strategy"). |
 
 ## Verification
 
@@ -479,8 +376,9 @@ Also verify:
 - Header title updates correctly
 - Filter icon appears/disappears for map and flora-fauna routes
 - Back/forward browser navigation works
-- Direct URL access (e.g., `#species/flora-001`) works
+- Direct URL access (e.g., `#species/flora-001`) works — especially test `#map` to confirm map initialises
 - Loading screen shows during initial load
+- Offline mode works (service worker caches templates)
 - No console errors
 
 ## Resulting index.html (Estimated)
