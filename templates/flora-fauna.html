@@ -1,0 +1,69 @@
+<div x-data="ffList">
+  <!-- Search bar -->
+  <div class="flex items-center px-3 py-2 border-b border-gray-200">
+    <span class="material-icons text-gray-400 mr-2" x-show="showFloraOnly || showFaunaOnly" @click="resetToCircleButtons()" style="cursor:pointer;">arrow_back</span>
+    <span class="material-icons text-gray-400 mr-2">search</span>
+    <input type="text" placeholder="Search" x-model="searchTerm" class="flex-1 text-base py-2 outline-none" style="height:50px;">
+    <span class="material-icons text-gray-400 cursor-pointer" x-show="searchTerm !== ''" @click="clearSearch()">cancel</span>
+  </div>
+
+  <!-- Circle buttons (default view) -->
+  <template x-if="showCircleButtons">
+    <div class="flex flex-col items-center py-8">
+      <div class="cursor-pointer mb-8" @click="selectFlora()">
+        <div class="w-[200px] h-[200px] rounded-full overflow-hidden flex items-center justify-center" style="background-image:url('assets/flora.jpg');background-size:cover;background-position:center;">
+          <span class="text-white text-5xl font-normal" style="font-family:'Precious';text-shadow:0 0 20px rgba(0,0,0,0.9);padding:35px;">Flora</span>
+        </div>
+      </div>
+      <div class="cursor-pointer" @click="selectFauna()">
+        <div class="w-[200px] h-[200px] rounded-full overflow-hidden flex items-center justify-center" style="background-image:url('assets/fauna.jpg');background-size:cover;background-position:center;">
+          <span class="text-white text-5xl font-normal" style="font-family:'Precious';text-shadow:0 0 20px rgba(0,0,0,0.9);padding:35px;">Fauna</span>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- List view -->
+  <template x-if="showList()">
+    <div class="overflow-auto" style="max-height:calc(100vh - 120px);">
+      <!-- Fauna section -->
+      <template x-if="getFaunaDisplay().length > 0 && type.flora && type.fauna && searchTerm !== ''">
+        <div class="bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700">Fauna</div>
+      </template>
+      <template x-for="item in getFaunaDisplay()" :key="item.id">
+        <div class="flex items-center border-b border-gray-100 cursor-pointer hover:bg-gray-50" @click="viewSpecies(item)" style="height:100px;">
+          <div class="w-[100px] h-[100px] flex-shrink-0 bg-gray-200 overflow-hidden">
+            <img :src="getImageSrc(item.imageRef)" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'">
+          </div>
+          <div class="flex-1 px-3 py-2 overflow-hidden">
+            <p class="text-base font-medium text-gray-700 truncate" x-text="item.name"></p>
+            <p class="text-xs text-gray-500 mt-1 line-clamp-3" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;" x-text="item.description"></p>
+          </div>
+        </div>
+      </template>
+
+      <!-- Flora section -->
+      <template x-if="getFloraDisplay().length > 0 && type.flora && type.fauna && searchTerm !== ''">
+        <div class="bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700">Flora</div>
+      </template>
+      <template x-for="item in getFloraDisplay()" :key="item.id">
+        <div class="flex items-center border-b border-gray-100 cursor-pointer hover:bg-gray-50" @click="viewSpecies(item)" style="height:100px;">
+          <div class="w-[100px] h-[100px] flex-shrink-0 bg-gray-200 overflow-hidden">
+            <img :src="getImageSrc(item.imageRef)" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'">
+          </div>
+          <div class="flex-1 px-3 py-2 overflow-hidden">
+            <p class="text-base font-medium text-gray-700 truncate" x-text="item.name"></p>
+            <p class="text-xs text-gray-500 mt-1" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;" x-text="item.description"></p>
+          </div>
+        </div>
+      </template>
+
+      <!-- No results -->
+      <template x-if="getFaunaDisplay().length === 0 && getFloraDisplay().length === 0">
+        <div class="flex items-center justify-center py-12">
+          <p class="text-xl font-medium text-gray-700">No search results</p>
+        </div>
+      </template>
+    </div>
+  </template>
+</div>

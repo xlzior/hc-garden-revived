@@ -11,20 +11,47 @@ document.addEventListener('alpine:init', () => {
     headerTitle: 'Home',
     filterSettings: { type: { flora: true, fauna: true }, trail: 'all', sortBy: 'alphabetical' },
     _routeParams: {},
+    _templates: {},
 
     async init() {
-      try {
-        const res = await fetch('data.json');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const text = await res.text();
-        this.data = JSON.parse(text);
-      } catch (e) {
-        console.error('[HC Garden] Init error:', e);
+      const templateNames = [
+        'home', 'introduction', 'map', 'overview', 'flora-fauna',
+        'species', 'history', 'committee-message', 'acknowledgements', 'references'
+      ];
+
+      const [dataRes, ...tplResults] = await Promise.allSettled([
+        fetch('data.json'),
+        ...templateNames.map(name =>
+          fetch('templates/' + name + '.html').then(function(r) {
+            if (!r.ok) throw new Error('Template ' + name + ': HTTP ' + r.status);
+            return r.text();
+          })
+        )
+      ]);
+
+      if (dataRes.status === 'fulfilled' && dataRes.value.ok) {
+        try {
+          var text = await dataRes.value.text();
+          this.data = JSON.parse(text);
+        } catch (e) {
+          console.error('[HC Garden] Data parse error:', e);
+          this.error = 'Failed to load data. Please refresh.';
+          this.loading = false;
+          return;
+        }
+      } else {
+        console.error('[HC Garden] Init error:', dataRes.reason || dataRes.value);
         this.error = 'Failed to load data. Please refresh.';
-        return;
-      } finally {
         this.loading = false;
+        return;
       }
+
+      tplResults.forEach(function(result, i) {
+        this._templates[templateNames[i]] =
+          result.status === 'fulfilled' ? result.value : '';
+      }.bind(this));
+
+      this.loading = false;
       this._handleHash();
       window.addEventListener('hashchange', () => this._handleHash());
     },

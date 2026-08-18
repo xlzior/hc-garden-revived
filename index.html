@@ -71,301 +71,34 @@
     <main class="pt-14 min-h-screen">
 
       <!-- HOME -->
-      <div x-show="$store.app.currentRoute === 'home'" x-transition.opacity>
-        <img src="assets/homeimage.jpg" alt="HC Garden" class="w-full object-cover" style="height: 75vw; max-height: 50vh;">
-        <div class="p-4 text-center">
-          <h2 class="text-2xl font-light text-gray-600 mt-4 font-[Lato]">A Garden Campus</h2>
-          <p class="text-sm text-gray-500 italic mt-2">In celebration of<br>Hwa Chong's 100th Anniversary</p>
-          <p class="text-sm text-gray-600 mt-4 font-light">Welcome to Hwa Chong's very own nature walking trail app!</p>
-          <p class="text-sm text-gray-600 mt-2 font-light">Explore the extensive flora and fauna of our garden campus with interactive maps and bite-sized writeups.</p>
-          <div class="flex justify-center mt-6">
-            <a href="#map" @click.prevent="$store.app.navigate('map')" class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded text-base font-medium transition-colors" style="width: 70%;">Let's Go!</a>
-          </div>
-        </div>
-      </div>
+      <div x-show="$store.app.currentRoute === 'home'" x-transition.opacity x-html="$store.app._templates.home || ''"></div>
 
       <!-- INTRODUCTION -->
-      <div x-show="$store.app.currentRoute === 'introduction'" x-transition.opacity>
-        <div class="p-5">
-          <h2 class="text-2xl font-light text-gray-600 text-center mt-4 font-[Lato]">Introduction to Nature in<br>Hwa Chong</h2>
-          <p class="text-sm text-gray-500 italic text-center mt-2">海天辽阔 云树苍龙<br>中有我华中</p>
-          <div class="mt-6 space-y-3">
-            <p class="text-base text-gray-600 font-light text-justify">Hwa Chong is blessed with a beautiful campus, with a plethora of flora and fauna. The tall trees and extensive bushes stand as testament to many years of cultivation, reflecting the school's long-standing dedication as a premier institution that grooms generations of leaders in research, industry and government.</p>
-            <p class="text-base text-gray-600 font-light text-justify">Amongst the historic buildings and the state-of-the-art facilities stand many thoughtfully arranged trees, shrubs and bushes, all of which contribute to the beauty of our campus. The trees lining the top of the terraces provide shade after sports training, while some plants specimens used for dissections in biology classes are grown in-house.</p>
-            <p class="text-base text-gray-600 font-light text-justify">Moreover, it is fortunate that Singapore is situated along the East Asian-Australasian Migratory flyway, acting as an important stopover point for birds. Thus, one can see many species of birds hidden among the trees.</p>
-            <p class="text-base text-gray-600 font-light text-justify">With the flora and fauna closely complementing one another, the school has successfully shaped itself into a garden campus, attracting birds, butterflies and other forms of wildlife to flourish among us.</p>
-            <p class="text-sm text-gray-500 italic text-center mt-4">饮水思源 厚德载物</p>
-            <p class="text-base text-gray-600 font-light text-justify">The flora in our school is also a reflection of the school's emphasis its Chinese values. Many of the school's trees and plants were donated by the school alumni - a strong testimony of the value of 饮水思源.</p>
-            <p class="text-base text-gray-600 font-light text-justify">It is only with the devotion and dedication of generations of members of the Hwa Chong family that we are able to experience the exquisite garden campus today.</p>
-            <p class="text-base text-gray-600 font-light text-justify">This year, we are pleased to document and share the rich biodiversity of the school with everyone else. We present a specially curated list of flora and fauna, accompanied by a beautiful compendium of photos in an application and website. Do spare some time and allow yourself to be enthralled by the beauty of our school, our second home. </p>
-          </div>
-        </div>
-      </div>
+      <div x-show="$store.app.currentRoute === 'introduction'" x-transition.opacity x-html="$store.app._templates.introduction || ''"></div>
 
       <!-- MAP -->
-      <div x-show="$store.app.currentRoute === 'map'" x-transition.opacity>
-        <div id="map-container" class="relative">
-          <div id="map" class="w-full h-full"></div>
-          <div id="map-legend" class="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-1" x-data="mapLegend"></div>
-        </div>
-      </div>
+      <div x-show="$store.app.currentRoute === 'map'" x-transition.opacity x-html="$store.app._templates.map || ''"></div>
 
       <!-- OVERVIEW -->
-      <div x-show="$store.app.currentRoute === 'overview'" x-transition.opacity x-data="clickableImage">
-        <div class="overflow-auto">
-          <template x-if="imageUrl">
-            <div class="relative inline-block" style="width:100%;">
-              <img :src="imageUrl" :alt="title" class="w-full" @load="onImageLoad($event)">
-              <template x-for="(point, index) in points" :key="index">
-                <div x-show="point.name && point.name !== 'MISSING INFO'">
-                  <template x-if="point.name && point.name.includes('fauna')">
-                    <div :style="getHotspotStyle(point)" @click="viewSpecies(point.name)" class="cursor-pointer">
-                      <img :src="getDetails(point.name)?.smallImage || ''" class="w-full h-full rounded-full border-2 border-white object-cover" @error="$event.target.style.display='none'">
-                    </div>
-                  </template>
-                  <template x-if="point.name && !point.name.includes('fauna')">
-                    <div :style="getFloraHotspotStyle(point)" @click="viewSpecies(point.name)" class="cursor-pointer"></div>
-                  </template>
-                </div>
-              </template>
-            </div>
-          </template>
-        </div>
-      </div>
+      <div x-show="$store.app.currentRoute === 'overview'" x-transition.opacity x-html="$store.app._templates.overview || ''"></div>
 
       <!-- FLORA AND FAUNA -->
-      <div x-show="$store.app.currentRoute === 'flora-fauna'" x-transition.opacity x-data="ffList">
-        <!-- Search bar -->
-        <div class="flex items-center px-3 py-2 border-b border-gray-200">
-          <span class="material-icons text-gray-400 mr-2" x-show="showFloraOnly || showFaunaOnly" @click="resetToCircleButtons()" style="cursor:pointer;">arrow_back</span>
-          <span class="material-icons text-gray-400 mr-2">search</span>
-          <input type="text" placeholder="Search" x-model="searchTerm" class="flex-1 text-base py-2 outline-none" style="height:50px;">
-          <span class="material-icons text-gray-400 cursor-pointer" x-show="searchTerm !== ''" @click="clearSearch()">cancel</span>
-        </div>
-
-        <!-- Circle buttons (default view) -->
-        <template x-if="showCircleButtons">
-          <div class="flex flex-col items-center py-8">
-            <div class="cursor-pointer mb-8" @click="selectFlora()">
-              <div class="w-[200px] h-[200px] rounded-full overflow-hidden flex items-center justify-center" style="background-image:url('assets/flora.jpg');background-size:cover;background-position:center;">
-                <span class="text-white text-5xl font-normal" style="font-family:'Precious';text-shadow:0 0 20px rgba(0,0,0,0.9);padding:35px;">Flora</span>
-              </div>
-            </div>
-            <div class="cursor-pointer" @click="selectFauna()">
-              <div class="w-[200px] h-[200px] rounded-full overflow-hidden flex items-center justify-center" style="background-image:url('assets/fauna.jpg');background-size:cover;background-position:center;">
-                <span class="text-white text-5xl font-normal" style="font-family:'Precious';text-shadow:0 0 20px rgba(0,0,0,0.9);padding:35px;">Fauna</span>
-              </div>
-            </div>
-          </div>
-        </template>
-
-        <!-- List view -->
-        <template x-if="showList()">
-          <div class="overflow-auto" style="max-height:calc(100vh - 120px);">
-            <!-- Fauna section -->
-            <template x-if="getFaunaDisplay().length > 0 && type.flora && type.fauna && searchTerm !== ''">
-              <div class="bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700">Fauna</div>
-            </template>
-            <template x-for="item in getFaunaDisplay()" :key="item.id">
-              <div class="flex items-center border-b border-gray-100 cursor-pointer hover:bg-gray-50" @click="viewSpecies(item)" style="height:100px;">
-                <div class="w-[100px] h-[100px] flex-shrink-0 bg-gray-200 overflow-hidden">
-                  <img :src="getImageSrc(item.imageRef)" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'">
-                </div>
-                <div class="flex-1 px-3 py-2 overflow-hidden">
-                  <p class="text-base font-medium text-gray-700 truncate" x-text="item.name"></p>
-                  <p class="text-xs text-gray-500 mt-1 line-clamp-3" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;" x-text="item.description"></p>
-                </div>
-              </div>
-            </template>
-
-            <!-- Flora section -->
-            <template x-if="getFloraDisplay().length > 0 && type.flora && type.fauna && searchTerm !== ''">
-              <div class="bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700">Flora</div>
-            </template>
-            <template x-for="item in getFloraDisplay()" :key="item.id">
-              <div class="flex items-center border-b border-gray-100 cursor-pointer hover:bg-gray-50" @click="viewSpecies(item)" style="height:100px;">
-                <div class="w-[100px] h-[100px] flex-shrink-0 bg-gray-200 overflow-hidden">
-                  <img :src="getImageSrc(item.imageRef)" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'">
-                </div>
-                <div class="flex-1 px-3 py-2 overflow-hidden">
-                  <p class="text-base font-medium text-gray-700 truncate" x-text="item.name"></p>
-                  <p class="text-xs text-gray-500 mt-1" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;" x-text="item.description"></p>
-                </div>
-              </div>
-            </template>
-
-            <!-- No results -->
-            <template x-if="getFaunaDisplay().length === 0 && getFloraDisplay().length === 0">
-              <div class="flex items-center justify-center py-12">
-                <p class="text-xl font-medium text-gray-700">No search results</p>
-              </div>
-            </template>
-          </div>
-        </template>
-      </div>
+      <div x-show="$store.app.currentRoute === 'flora-fauna'" x-transition.opacity x-html="$store.app._templates['flora-fauna'] || ''"></div>
 
       <!-- SPECIES DETAIL -->
-      <div x-show="$store.app.currentRoute === 'species'" x-transition.opacity x-data="ffEntry">
-        <div class="species-detail-layout">
-          <!-- Image -->
-          <div class="species-image">
-            <template x-if="imageRef && imageRef.length > 0">
-              <div>
-                <div class="cursor-pointer" @click="openLightbox(0)">
-                  <img :src="Array.isArray(imageRef) ? imageRef[0] : imageRef" :alt="name" class="w-full" loading="lazy" @error="$event.target.style.display='none'">
-                </div>
-                <template x-if="Array.isArray(imageRef) && imageRef.length > 1">
-                  <div class="flex items-center px-4 py-3 border-b border-gray-100 cursor-pointer" @click="openLightbox(0)">
-                    <span class="material-icons text-gray-400 mr-2" style="font-size:20px;">images</span>
-                    <span class="flex-1 text-base text-gray-600">Image gallery</span>
-                    <span class="material-icons text-gray-400">chevron_right</span>
-                  </div>
-                </template>
-              </div>
-            </template>
-          </div>
-
-          <!-- Details -->
-          <div class="species-info p-5 pb-24">
-            <h2 class="text-2xl font-medium text-gray-700 mt-2" x-text="name"></h2>
-            <p class="text-sm text-gray-600 mt-1" x-html="formattedSciName"></p>
-            <p class="text-base text-gray-600 font-light mt-4 text-justify whitespace-pre-line" x-text="description"></p>
-
-            <!-- Locations -->
-            <template x-if="locationList.length > 0">
-              <div class="mt-6">
-                <h3 class="text-lg font-medium text-gray-700">Locations: </h3>
-                <template x-for="loc in locationList" :key="loc.id">
-                  <div class="flex items-center py-3 border-b border-gray-100 cursor-pointer" @click="goToLocation(loc.id)" style="padding-left:15px;">
-                    <span class="flex-1 text-base text-gray-700" x-text="loc.title"></span>
-                    <span class="material-icons text-gray-400">chevron_right</span>
-                  </div>
-                </template>
-              </div>
-            </template>
-          </div>
-        </div>
-
-        <!-- Lightbox -->
-        <template x-if="lightboxOpen">
-          <div class="fixed inset-0 z-50 bg-black bg-opacity-95 flex items-center justify-center" @click.self="closeLightbox()">
-            <button class="absolute top-4 right-4 text-white text-3xl" @click="closeLightbox()">&times;</button>
-            <template x-if="lightboxImages.length > 1">
-              <button class="absolute left-4 text-white text-4xl" @click.stop="prevImage()" x-show="lightboxIndex > 0">&#8249;</button>
-            </template>
-            <img :src="lightboxImages[lightboxIndex]" class="max-w-[90vw] max-h-[90vh] object-contain">
-            <template x-if="lightboxImages.length > 1">
-              <button class="absolute right-4 text-white text-4xl" @click.stop="nextImage()" x-show="lightboxIndex < lightboxImages.length - 1">&#8250;</button>
-            </template>
-          </div>
-        </template>
-      </div>
+      <div x-show="$store.app.currentRoute === 'species'" x-transition.opacity x-html="$store.app._templates.species || ''"></div>
 
       <!-- HISTORICAL PHOTOS -->
-      <div x-show="$store.app.currentRoute === 'history'" x-transition.opacity>
-        <div class="p-5">
-          <p class="text-base text-gray-600 font-light text-justify mb-4">This page is dedicated for all alumni whom may be interested in the brief history of flora in Hwa Chong. Are you able to guess which years were these photos taken? </p>
-        </div>
-        <template x-if="$store.app.data">
-          <div>
-            <template x-for="(entry, key) in $store.app.data.historical" :key="key">
-              <div class="mb-2">
-                <div class="historical-image-container">
-                  <img :src="entry.imageRef" :alt="entry.description || 'Historical photo'" class="w-full" :width="entry.width" :height="entry.height" loading="lazy" @error="$event.target.style.display='none'">
-                </div>
-                <template x-if="entry.description">
-                  <div class="p-5">
-                    <p class="text-base text-gray-600 font-light text-justify" x-text="entry.description"></p>
-                  </div>
-                </template>
-              </div>
-            </template>
-          </div>
-        </template>
-      </div>
+      <div x-show="$store.app.currentRoute === 'history'" x-transition.opacity x-html="$store.app._templates.history || ''"></div>
 
       <!-- COMMITTEE MESSAGE -->
-      <div x-show="$store.app.currentRoute === 'committee-message'" x-transition.opacity>
-        <div class="p-5">
-          <h2 class="text-2xl font-light text-gray-600 text-center mt-4 font-[Lato]">Message from the HC Garden Committee</h2>
-          <p class="text-sm text-gray-500 italic text-center mt-2">'If you truly love Nature, you will find beauty everywhere.' - Vincent van Gogh</p>
-          <div class="mt-6 space-y-3">
-            <p class="text-base text-gray-600 font-light text-justify">As a group of nature lovers in Hwa Chong, we set out to discover the legacy of beauty in the greenery of our garden campus. Identifying the plethora of flora and fauna seemed daunting at first, but we ended up deeply enthralled by the boundless biodiversity in our school and the rich history behind it. </p>
-            <p class="text-base text-gray-600 font-light text-justify">We were also amazed by the amount of devotion behind the landscape of Hwa Chong - some plants are donations from alumni, while others are selections by teachers for biology class. The healthy ecosystem created by the artfully designed green spaces allowed a great variety of birds and insects to thrive on campus, bringing us closer to nature.</p>
-            <p class="text-base text-gray-600 font-light text-justify">Indeed, the excitement of identifying species and learning about the intriguing characteristics of each of them drove us to become more curious and observant each time we wander around in school. Every time we pause and marvel at the plants around us, we become more determined to inspire our friends to appreciate the beauty around us. With our website and mobile app that present selected flora and fauna on campus, we hope that you would also take time to wander, and pay attention to the hidden gems on our garden campus.</p>
-          </div>
-        </div>
-      </div>
+      <div x-show="$store.app.currentRoute === 'committee-message'" x-transition.opacity x-html="$store.app._templates['committee-message'] || ''"></div>
 
       <!-- ACKNOWLEDGEMENTS -->
-      <div x-show="$store.app.currentRoute === 'acknowledgements'" x-transition.opacity>
-        <div class="p-5">
-          <p class="text-sm text-gray-500 italic text-center mt-4">"If I have seen further, it is by standing on the shoulders of giants." - Sir Isaac Newton</p>
-          <div class="mt-6 space-y-3">
-            <p class="text-base text-gray-600 font-light text-justify">This project would certainly not have been possible without the generous assistance of many of our Hwa Chong teachers, alumni and students.</p>
-            <p class="text-base text-gray-600 font-light text-justify">We would like to express our heartfelt appreciation and sincere gratitude to our Principal Mr. Pang Choon How and Deputy Principals for their support; in particular, Deputy Principal/Special Projects, Mr. Tan Pheng Tiong for sharing with us more about Hwa Chong's rich history and landscaping, as well as the historical photographs of the school; Dean of Research Studies, Dr. Chia Hui Ping, for sharing her expertise and knowledge in Botany with us; Dr. Lim Jit Ning, for his endless encouragement; Dr. Adeline Chia, for her guidance and mentorship throughout this entire journey; Dr. Sandra Tan, for her invaluable recommendations and assistance in the publicity of the project, as well as vetting of write-ups; Mr. Tang Koon Loon and Mr. Lau Soo Yen, for sharing their passion for birds and vivid photographs of fauna in the school with us; Mr. Mark Tan, for his innovative suggestions, comprehensive proofreading of the write-ups, and training us as trail guides; together with Ms. Tan Wei Qian, for her constructive suggestions concerning the write-ups.</p>
-            <p class="text-base text-gray-600 font-light text-justify">We would also like to extend our gratitude to school alumni who have contributed to our school landscape. In particular to Mr. Mak Chin On, for the contributions of fauna that he has made over the past few decades, and for sharing his wealth of knowledge on the great variety of trees in the school with us.</p>
-            <p class="text-base text-gray-600 font-light text-justify">The estate staff and school gardeners are our unsung heroes - working tirelessly over many years to shape the landscape in school, amd making it the thriving Garden Campus it is today.</p>
-            <p class="text-base text-gray-600 font-light text-justify">Last but not least, we would like thank the school for providing us with the opportunity to work on this very meaningful project. This journey has taught us to appreciate Hwa Chong from a different perspective, and proves that this hundred year-old campus still has many surprises waiting to be uncovered.</p>
-            <p class="text-base text-gray-600 font-light text-justify">This work is dedicated to all the giants in our lives.</p>
-
-            <h3 class="text-lg font-medium text-gray-700 mt-6">Biodiversity Trails Student Committee</h3>
-            <p class="text-base text-gray-600 font-light text-justify">Members of the student committee who have made contributions, in one way or another, to various aspects of the project are listed below</p>
-
-            <h4 class="text-base font-medium text-gray-700 mt-4">Photography</h4>
-            <p class="text-base text-gray-600 font-light">Amanda Koh Kai Yen</p>
-            <p class="text-base text-gray-600 font-light">Winnie Lim Wen Ying</p>
-            <p class="text-base text-gray-600 font-light">Faith Teo Kai En</p>
-            <p class="text-base text-gray-600 font-light">Cheong Huey Yew</p>
-            <p class="text-base text-gray-600 font-light">Jenny Ma Junyi</p>
-
-            <h4 class="text-base font-medium text-gray-700 mt-4">Write-ups for Flora</h4>
-            <p class="text-base text-gray-600 font-light">Hu Yi</p>
-            <p class="text-base text-gray-600 font-light">Sin Wei Chuen</p>
-            <p class="text-base text-gray-600 font-light">Li Tanfei</p>
-            <p class="text-base text-gray-600 font-light">Li Ming Jun</p>
-            <p class="text-base text-gray-600 font-light">Sae Xilong</p>
-            <p class="text-base text-gray-600 font-light">Cheong Huey Yew</p>
-            <p class="text-base text-gray-600 font-light">Jenny Ma Junyi</p>
-            <p class="text-base text-gray-600 font-light">Ong Wei Jun</p>
-
-            <h4 class="text-base font-medium text-gray-700 mt-4">Write-ups for Fauna</h4>
-            <p class="text-base text-gray-600 font-light">Fan Xilin</p>
-            <p class="text-base text-gray-600 font-light">Shan Yunhong</p>
-
-            <h4 class="text-base font-medium text-gray-700 mt-4">Website Design</h4>
-            <p class="text-base text-gray-600 font-light">Faith Teo Kai En</p>
-            <p class="text-base text-gray-600 font-light">Winnie Lim Wen Ying</p>
-            <p class="text-base text-gray-600 font-light">Amanda Koh Kai Yen</p>
-
-            <h4 class="text-base font-medium text-gray-700 mt-4">App Development</h4>
-            <p class="text-base text-gray-600 font-light">Lye Wen Jun</p>
-            <p class="text-base text-gray-600 font-light">Leonard Ong Rui Fu</p>
-          </div>
-        </div>
-      </div>
+      <div x-show="$store.app.currentRoute === 'acknowledgements'" x-transition.opacity x-html="$store.app._templates.acknowledgements || ''"></div>
 
       <!-- REFERENCES -->
-      <div x-show="$store.app.currentRoute === 'references'" x-transition.opacity>
-        <div class="p-5">
-          <p class="text-base text-gray-600 font-light text-justify mb-4">We would also like to acknowledge the key following sources of information for our writeups. We declare that no photographs from these sources have been used by us.</p>
-          <div class="space-y-3">
-            <p class="text-base text-gray-600 font-light">Chin, Jacqueline, and John Chin. John&Jacq's Garden. 2011. Accessed 2019. https://www.jaycjayc.com/.</p>
-            <p class="text-base text-gray-600 font-light">Fern, Ken et al. "Useful Tropical Plants." Useful Tropical Plants. Accessed 2019. http://tropical.theferns.info/.</p>
-            <p class="text-base text-gray-600 font-light">Flowers of India. Accessed 2019. http://www.flowersofindia.net/.</p>
-            <p class="text-base text-gray-600 font-light">Master Gardener Program. 2019. Accessed 2019. https://wimastergardener.org/.</p>
-            <p class="text-base text-gray-600 font-light">Missouri Botanical Garden. Accessed 2019. http://www.missouribotanicalgarden.org/.</p>
-            <p class="text-base text-gray-600 font-light">Mound, Laurence A, Dom W Collins and Anne Hastings. Thysanoptera Britannica et Hibernica - Thrips of the British Isles. Lucidcentral.org, Identic Pty Ltd, Queensland, Australia. 2018. Accessed 2019. https://keys.lucidcentral.org</p>
-            <p class="text-base text-gray-600 font-light">National Center for Biotechnology Information (NCBI). Accessed 2019. https://www.ncbi.nlm.nih.gov/.</p>
-            <p class="text-base text-gray-600 font-light">National Library Board Singapore. eResources. 2019. Accessed 2019. http://eresources.nlb.gov.sg/.</p>
-            <p class="text-base text-gray-600 font-light">National Parks Board (NParks). Accessed 2019. https://www.nparks.gov.sg/.</p>
-            <p class="text-base text-gray-600 font-light">Plants For A Future. 2012. Accessed 2019. https://pfaf.org/user/Default.aspx.</p>
-            <p class="text-base text-gray-600 font-light">Slik, Ferry et al. Plants of Southeast Asia. 2009. Accessed 2019. http://www.asianplant.net/.</p>
-            <p class="text-base text-gray-600 font-light">Stuart, Godofredo U. StuartXchange. 2018. Accessed 2019. http://www.stuartxchange.org/.</p>
-            <p class="text-base text-gray-600 font-light">Wikipedia. Accessed 2019. https://en.wikipedia.org/.</p>
-          </div>
-        </div>
-      </div>
+      <div x-show="$store.app.currentRoute === 'references'" x-transition.opacity x-html="$store.app._templates.references || ''"></div>
 
     </main>
 

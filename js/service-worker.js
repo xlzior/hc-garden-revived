@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hc-garden-v3';
+const CACHE_NAME = 'hc-garden-v4';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -104,5 +104,15 @@ const URLS = [
   "js/service-worker.js",
   "js/tailwind.js",
   "js/utils.js",
-  "manifest.json"
+  "manifest.json",
+  "templates/home.html",
+  "templates/introduction.html",
+  "templates/map.html",
+  "templates/overview.html",
+  "templates/flora-fauna.html",
+  "templates/species.html",
+  "templates/history.html",
+  "templates/committee-message.html",
+  "templates/acknowledgements.html",
+  "templates/references.html"
 ];
