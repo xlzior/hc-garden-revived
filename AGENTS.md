@@ -54,3 +54,7 @@ Hash-based routing. Unknown hashes fall back to `map`. Child routes (e.g. specie
 - **Service worker hardcodes precache list.** Adding new files requires updating this list manually.
 - **No CI/CD, no linting, no testing.** Push to `main` to deploy via GitHub Pages.
 - **Planned migrations** exist in `plans/`. Check those before making major structural changes.
+
+## Plans
+
+When asked to create a plan, write it to the `plans/` folder using the naming convention `YYYY-MM-DD_description.md` (e.g. `2026-08-20_pinecone_router_migration.md`).
