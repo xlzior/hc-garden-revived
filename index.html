@@ -47,25 +47,27 @@
     </header>
 
     <!-- CONTENT AREA (below header) -->
-    <main class="pt-14 pb-16 min-h-screen">
+    <main class="pt-14 pb-16 min-h-screen relative">
 
-      <!-- MAP -->
-      <div x-show="$store.app.currentRoute === 'map'" x-transition.opacity x-html="$store.app._templates.map || ''"></div>
+      <!-- MAP — always rendered, position:absolute with fixed dimensions, never changes -->
+      <div id="route-map"></div>
+      <!-- WHITE COVER — hides map when another tab is active, toggled imperatively -->
+      <div id="route-map-cover"></div>
 
       <!-- OVERVIEW -->
-      <div x-show="$store.app.currentRoute === 'overview'" x-transition.opacity x-html="$store.app._templates.overview || ''"></div>
+      <div x-show="$store.app.currentRoute === 'overview'" x-transition.opacity id="route-overview" class="relative z-20"></div>
 
       <!-- CATALOG (Flora and Fauna) -->
-      <div x-show="$store.app.currentRoute === 'catalog'" x-transition.opacity x-html="$store.app._templates.catalog || ''"></div>
+      <div x-show="$store.app.currentRoute === 'catalog'" x-transition.opacity id="route-catalog" class="relative z-20"></div>
 
       <!-- SPECIES DETAIL -->
-      <div x-show="$store.app.currentRoute === 'species'" x-transition.opacity x-html="$store.app._templates.species || ''"></div>
+      <div x-show="$store.app.currentRoute === 'species'" x-transition.opacity id="route-species" class="relative z-20"></div>
 
       <!-- HISTORICAL PHOTOS -->
-      <div x-show="$store.app.currentRoute === 'history'" x-transition.opacity x-html="$store.app._templates.history || ''"></div>
+      <div x-show="$store.app.currentRoute === 'history'" x-transition.opacity id="route-history" class="relative z-20"></div>
 
       <!-- INFO (Acknowledgements + References) -->
-      <div x-show="$store.app.currentRoute === 'info'" x-transition.opacity x-html="$store.app._templates.info || ''"></div>
+      <div x-show="$store.app.currentRoute === 'info'" x-transition.opacity id="route-info" class="relative z-20"></div>
 
     </main>
 

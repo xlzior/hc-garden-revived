@@ -7,7 +7,9 @@ document.addEventListener('alpine:init', () => {
         const data = Alpine.store('app').data;
         if (data && !this._map) this._initMap();
         if (this._map) {
-          setTimeout(() => this._map.invalidateSize(), 50);
+          requestAnimationFrame(() => {
+            this._map.invalidateSize();
+          });
         }
       });
 
