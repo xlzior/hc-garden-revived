@@ -87,7 +87,7 @@ function getFFEntryDetails(dbName, floraFaunaData) {
 }
 
 function parseRoute(hash) {
-  if (!hash || hash === '#' || hash === '#home') return { screen: 'home' };
+  if (!hash || hash === '#' || hash === '#map') return { screen: 'map' };
   hash = hash.replace(/^#/, '');
   const parts = hash.split('/');
   if (parts[0] === 'map') {
@@ -96,34 +96,20 @@ function parseRoute(hash) {
     }
     return { screen: 'map' };
   }
-  if (parts[0] === 'flora-fauna') {
-    return { screen: 'flora-fauna' };
-  }
-  if (parts[0] === 'species' && parts[1]) {
-    return { screen: 'species', id: parts[1] };
-  }
-  const routeMap = {
-    'home': 'home',
-    'introduction': 'introduction',
-    'history': 'history',
-    'committee-message': 'committee-message',
-    'acknowledgements': 'acknowledgements',
-    'references': 'references'
-  };
-  return { screen: routeMap[parts[0]] || parts[0] };
+  if (parts[0] === 'catalog') return { screen: 'catalog' };
+  if (parts[0] === 'species' && parts[1]) return { screen: 'species', id: parts[1] };
+  if (parts[0] === 'history') return { screen: 'history' };
+  if (parts[0] === 'info') return { screen: 'info' };
+  return { screen: 'map' };
 }
 
 const HEADER_TITLES = {
-  'home': 'Home',
-  'introduction': 'Introduction',
   'map': 'Map',
   'overview': '',
-  'flora-fauna': 'Flora and Fauna',
+  'catalog': 'Catalog',
   'species': '',
   'history': 'Historical Photos',
-  'committee-message': 'Message from Committee',
-  'acknowledgements': 'Acknowledgements',
-  'references': 'References'
+  'info': 'Info'
 };
 
 function getHeaderTitle(route, data) {

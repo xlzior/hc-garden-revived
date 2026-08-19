@@ -5,18 +5,17 @@ document.addEventListener('alpine:init', () => {
     data: null,
     loading: true,
     error: null,
-    currentRoute: 'home',
+    currentRoute: 'map',
     markers: {},
     showFilter: false,
-    headerTitle: 'Home',
+    headerTitle: 'Map',
     filterSettings: { type: { flora: true, fauna: true }, trail: 'all', sortBy: 'alphabetical' },
     _routeParams: {},
     _templates: {},
 
     async init() {
       const templateNames = [
-        'home', 'introduction', 'map', 'overview', 'flora-fauna',
-        'species', 'history', 'committee-message', 'acknowledgements', 'references'
+        'map', 'overview', 'catalog', 'species', 'history', 'info'
       ];
 
       const [dataRes, ...tplResults] = await Promise.allSettled([
@@ -57,11 +56,11 @@ document.addEventListener('alpine:init', () => {
     },
 
     _handleHash() {
-      const hash = window.location.hash || '#home';
+      const hash = window.location.hash || '#map';
       const parsed = parseRoute(hash);
       this.currentRoute = parsed.screen;
       this.headerTitle = getHeaderTitle(parsed.screen, this);
-      this.showFilter = (parsed.screen === 'map' || parsed.screen === 'flora-fauna');
+      this.showFilter = (parsed.screen === 'map' || parsed.screen === 'catalog');
       if (parsed.screen === 'overview') {
         this._resolveOverviewParams(parsed);
       }
@@ -85,7 +84,7 @@ document.addEventListener('alpine:init', () => {
         this.headerTitle = HEADER_TITLES[screen] || screen;
       }
       this.currentRoute = screen;
-      this.showFilter = (screen === 'map' || screen === 'flora-fauna');
+      this.showFilter = (screen === 'map' || screen === 'catalog');
       if (params && params.hash) {
         window.history.pushState(null, '', params.hash);
       }

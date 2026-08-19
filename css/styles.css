@@ -34,34 +34,6 @@
   min-width: 120px;
 }
 
-.sidebar-open {
-  overflow: hidden;
-}
-
-.sidebar-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.3);
-  z-index: 40;
-}
-
-.sidebar-panel {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 280px;
-  height: 100%;
-  background: white;
-  z-index: 50;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.15);
-  transform: translateX(-100%);
-  transition: transform 0.25s ease;
-}
-
-.sidebar-panel.open {
-  transform: translateX(0);
-}
-
 .pulse-circle {
   position: absolute;
   border: 3px solid gold;
@@ -84,10 +56,15 @@ img.onerror-fallback {
   background-color: #ededed;
 }
 
+:root {
+  --header-h: 56px;
+  --tabbar-h: 56px;
+}
+
 #map-container {
   position: relative;
   width: 100%;
-  height: calc(100vh - 56px);
+  height: calc(100vh - var(--header-h) - var(--tabbar-h));
 }
 
 #map {
@@ -143,14 +120,14 @@ img.onerror-fallback {
 
 /* PWA landscape mode */
 @media (display-mode: standalone) and (orientation: landscape) {
+  :root {
+    --header-h: 40px;
+  }
   header {
     height: 40px !important;
   }
   main {
     padding-top: 40px !important;
-  }
-  #map-container {
-    height: calc(100vh - 40px);
   }
   #map-legend {
     max-height: 120px;
@@ -161,12 +138,12 @@ img.onerror-fallback {
   }
   .species-detail-layout .species-image {
     flex: 0 0 40%;
-    max-height: calc(100vh - 40px);
+    max-height: calc(100vh - var(--header-h) - var(--tabbar-h));
     overflow: hidden;
   }
   .species-detail-layout .species-info {
     flex: 1;
     overflow-y: auto;
-    max-height: calc(100vh - 40px);
+    max-height: calc(100vh - var(--header-h) - var(--tabbar-h));
   }
 }
