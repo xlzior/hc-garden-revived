@@ -2,12 +2,24 @@
 document.addEventListener('alpine:init', () => {
   Alpine.data('ffList', () => ({
     searchTerm: '',
-    type: { flora: true, fauna: true },
+    activeType: 'all',
     trail: 'all',
     sortBy: 'alphabetical',
     flora: [],
     fauna: [],
     initialized: false,
+
+    get type() {
+      if (this.activeType === 'flora') return { flora: true, fauna: false };
+      if (this.activeType === 'fauna') return { flora: false, fauna: true };
+      return { flora: true, fauna: true };
+    },
+
+    set type(val) {
+      if (val.flora && val.fauna) this.activeType = 'all';
+      else if (val.flora) this.activeType = 'flora';
+      else if (val.fauna) this.activeType = 'fauna';
+    },
 
     init() {
       this._startWatchingLocation();
@@ -70,38 +82,12 @@ document.addEventListener('alpine:init', () => {
       );
     },
 
-    get showCircleButtons() {
-      return this.searchTerm === '' && this.type.flora && this.type.fauna;
-    },
-
-    get showFloraOnly() {
-      return this.type.flora && !this.type.fauna;
-    },
-
-    get showFaunaOnly() {
-      return !this.type.flora && this.type.fauna;
-    },
-
-    showList() {
-      return this.searchTerm !== '' || !this.type.flora || !this.type.fauna;
-    },
-
-    selectFlora() {
-      this.type = { flora: true, fauna: false };
-    },
-
-    selectFauna() {
-      this.type = { flora: false, fauna: true };
-    },
-
-    resetToCircleButtons() {
-      this.searchTerm = '';
-      this.type = { flora: true, fauna: true };
+    setActiveType(type) {
+      this.activeType = type;
     },
 
     clearSearch() {
       this.searchTerm = '';
-      this.type = { flora: true, fauna: true };
     },
 
     isSearched(details) {

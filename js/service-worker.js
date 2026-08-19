@@ -82,7 +82,6 @@ const URLS = [
   "assets/fonts/google/S6u9w4BMUTPHh6UVew8.ttf",
   "assets/fonts/google/S6u9w4BMUTPHh7USew8.ttf",
   "assets/fonts/google/S6uyw4BMUTPHvxk.ttf",
-  "assets/fonts/Precious.ttf",
   "assets/images/fauna.jpg",
   "assets/images/flora.jpg",
   "assets/images/homeimage.jpg",
