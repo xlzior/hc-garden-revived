@@ -1,116 +1,34 @@
-// js/app.js — Alpine store, routing, data loading
+// js/app.js — Alpine store + Pinecone route handlers
 
 document.addEventListener('alpine:init', () => {
+  if (!window.location.hash || window.location.hash === '#') {
+    window.location.hash = '/';
+  }
+
   Alpine.store('app', {
     data: null,
     loading: true,
     error: null,
-    currentRoute: 'map',
-    markers: {},
-    showFilter: false,
+    showFilter: true,
     headerTitle: 'Map',
+    isMapRoute: true,
     filterSettings: { type: { flora: true, fauna: true }, trail: 'all', sortBy: 'alphabetical' },
-    _routeParams: {},
-    _mapHidden: false,
+    markers: {},
+    currentDetail: null,
+    overviewParams: null,
 
     async init() {
-      const templateNames = [
-        'map', 'overview', 'catalog', 'species', 'history', 'info'
-      ];
-
-      const [dataRes, ...tplResults] = await Promise.allSettled([
-        fetch('data.json'),
-        ...templateNames.map(name =>
-          fetch('templates/' + name + '.html').then(function(r) {
-            if (!r.ok) throw new Error('Template ' + name + ': HTTP ' + r.status);
-            return r.text();
-          })
-        )
-      ]);
-
-      if (dataRes.status === 'fulfilled' && dataRes.value.ok) {
-        try {
-          var text = await dataRes.value.text();
-          this.data = JSON.parse(text);
-        } catch (e) {
-          console.error('[HC Garden] Data parse error:', e);
-          this.error = 'Failed to load data. Please refresh.';
-          this.loading = false;
-          return;
-        }
-      } else {
-        console.error('[HC Garden] Init error:', dataRes.reason || dataRes.value);
+      try {
+        const res = await fetch('data.json');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        this.data = JSON.parse(await res.text());
+      } catch (e) {
+        console.error('[HC Garden] Data load error:', e);
         this.error = 'Failed to load data. Please refresh.';
-        this.loading = false;
-        return;
       }
-
-      tplResults.forEach(function(result, i) {
-        const html = result.status === 'fulfilled' ? result.value : '';
-        if (html) {
-          const container = document.getElementById('route-' + templateNames[i]);
-          if (container) {
-            container.innerHTML = html;
-            Alpine.initTree(container);
-          }
-        }
-      });
-
       this.loading = false;
-      var mapEl = document.getElementById('route-map');
-      Object.assign(mapEl.style, {
-        position: 'absolute',
-        top: '56px',
-        left: '0',
-        width: '100%',
-        height: 'calc(100vh - 56px - 56px)',
-        zIndex: '0'
-      });
-      var coverEl = document.getElementById('route-map-cover');
-      Object.assign(coverEl.style, {
-        position: 'absolute',
-        top: '56px',
-        left: '0',
-        width: '100%',
-        height: 'calc(100vh - 56px - 56px)',
-        background: 'white',
-        zIndex: '1',
-        transition: 'opacity 0.2s ease'
-      });
-      this._mapHidden = true;
-      this._handleHash();
-      window.addEventListener('hashchange', () => this._handleHash());
-    },
-
-    _handleHash() {
-      const hash = window.location.hash || '#map';
-      const parsed = parseRoute(hash);
-      this.currentRoute = parsed.screen;
-      this.headerTitle = getHeaderTitle(parsed.screen, this);
-      this.showFilter = (parsed.screen === 'map' || parsed.screen === 'catalog');
-      this._setMapVisible(parsed.screen === 'map' || parsed.screen === 'overview');
-      if (parsed.screen === 'overview') {
-        this._resolveOverviewParams(parsed);
-      }
-      if (parsed.screen === 'species') {
-        this._resolveSpeciesParams(parsed);
-      }
-    },
-
-    navigate(screen, params) {
-      this._routeParams = params || {};
-      if (screen === 'species' && params && params.details) {
-        this.headerTitle = params.details.name;
-      } else if (screen === 'overview' && params && params.title) {
-        this.headerTitle = params.title;
-      } else {
-        this.headerTitle = HEADER_TITLES[screen] || screen;
-      }
-      this.currentRoute = screen;
-      this.showFilter = (screen === 'map' || screen === 'catalog');
-      this._setMapVisible(screen === 'map' || screen === 'overview');
-      if (params && params.hash) {
-        window.history.pushState(null, '', params.hash);
+      if (this.isMapRoute) {
+        setTimeout(() => window.dispatchEvent(new CustomEvent('map-visible')), 100);
       }
     },
 
@@ -122,32 +40,30 @@ document.addEventListener('alpine:init', () => {
       if (this.markers[locationId]) {
         this.markers[locationId].openPopup();
       }
+    }
+  });
+
+  Alpine.data('routeHandlers', () => ({
+    init() {
+      this.$router.settings({ hash: true });
     },
 
-    _setMapVisible(visible) {
-      var cover = document.getElementById('route-map-cover');
-      if (!cover) return;
-      if (visible && this._mapHidden) {
-        cover.style.opacity = '0';
-        cover.style.pointerEvents = 'none';
-        this._mapHidden = false;
-        requestAnimationFrame(() => {
-          window.dispatchEvent(new CustomEvent('map-visible'));
-        });
-      } else if (!visible && !this._mapHidden) {
-        cover.style.opacity = '1';
-        cover.style.pointerEvents = '';
-        this._mapHidden = true;
-      }
+    handleMap() {
+      Alpine.store('app').isMapRoute = true;
+      Alpine.store('app').headerTitle = 'Map';
+      Alpine.store('app').showFilter = true;
+      Alpine.store('app').currentDetail = null;
+      Alpine.store('app').overviewParams = null;
+      setTimeout(() => window.dispatchEvent(new CustomEvent('map-visible')), 100);
     },
 
-    _resolveOverviewParams(parsed) {
-      if (!this.data || !this.data['map']) return;
-      const { trailId, routeId } = parsed;
-      const trail = this.data['map'][trailId];
-      if (trail && trail.route && trail.route[routeId]) {
-        let route = trail.route[routeId];
-        this._routeParams = {
+    handleOverview(context) {
+      const { trailId, routeId } = context.params;
+      const data = Alpine.store('app').data;
+      Alpine.store('app').isMapRoute = true;
+      if (data && data['map'] && data['map'][trailId] && data['map'][trailId].route && data['map'][trailId].route[routeId]) {
+        const route = data['map'][trailId].route[routeId];
+        Alpine.store('app').overviewParams = {
           title: route.title,
           url: route.imageRef,
           points: (route.points || []).map(p => ({
@@ -156,16 +72,41 @@ document.addEventListener('alpine:init', () => {
             name: p.params ? p.params.name : undefined
           }))
         };
-        this.headerTitle = route.title;
+        Alpine.store('app').headerTitle = route.title;
       }
+      Alpine.store('app').showFilter = false;
+      Alpine.store('app').currentDetail = null;
+      setTimeout(() => window.dispatchEvent(new CustomEvent('map-visible')), 100);
     },
 
-    _resolveSpeciesParams(parsed) {
-      const { id } = parsed;
-      if (id && this.data && this.data['flora&fauna'] && this.data['flora&fauna'][id]) {
-        this._routeParams = { details: this.data['flora&fauna'][id] };
-        this.headerTitle = this.data['flora&fauna'][id].name || '';
+    handleCatalog() {
+      Alpine.store('app').isMapRoute = false;
+      Alpine.store('app').headerTitle = 'Catalog';
+      Alpine.store('app').showFilter = true;
+      Alpine.store('app').currentDetail = null;
+      Alpine.store('app').overviewParams = null;
+    },
+
+    handleSpecies(context) {
+      const { id } = context.params;
+      const data = Alpine.store('app').data;
+      Alpine.store('app').isMapRoute = false;
+      if (id && data && data['flora&fauna'] && data['flora&fauna'][id]) {
+        const details = data['flora&fauna'][id];
+        Alpine.store('app').headerTitle = details.name || '';
+        Alpine.store('app').currentDetail = details;
       }
+      Alpine.store('app').showFilter = false;
+      Alpine.store('app').overviewParams = null;
+    },
+
+    handleNotFound() {
+      Alpine.store('app').isMapRoute = true;
+      Alpine.store('app').headerTitle = 'Map';
+      Alpine.store('app').showFilter = true;
+      Alpine.store('app').currentDetail = null;
+      Alpine.store('app').overviewParams = null;
+      window.location.hash = '/';
     }
-  });
+  }));
 });

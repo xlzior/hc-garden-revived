@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hc-garden-v4';
+const CACHE_NAME = 'hc-garden-v6';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -53,16 +53,13 @@ self.addEventListener('fetch', (e) => {
   }
 
   e.respondWith(
-    caches.match(e.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(e.request).then((res) => {
-        if (res.ok) {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(e.request, clone));
-        }
-        return res;
-      });
-    })
+    fetch(e.request).then((res) => {
+      if (res.ok) {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(e.request, clone));
+      }
+      return res;
+    }).catch(() => caches.match(e.request))
   );
 });
 
@@ -90,6 +87,7 @@ const URLS = [
   "data.json",
   "index.html",
   "js/alpine.min.js",
+  "js/pinecone-router.min.js",
   "js/app.js",
   "js/components/clickable-image.js",
   "js/components/ff-entry.js",

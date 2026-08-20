@@ -19,7 +19,7 @@ document.addEventListener('alpine:init', () => {
       { id: 'distance', name: 'Distance' }
     ],
     openModal() {
-      this.enableFilter = Alpine.store('app').currentRoute === 'map'
+      this.enableFilter = Alpine.store('app').showFilter
         ? ['type', 'trail']
         : ['type', 'trail', 'sortBy'];
       const current = Alpine.store('app').filterSettings;

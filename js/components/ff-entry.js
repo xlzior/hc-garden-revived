@@ -6,13 +6,10 @@ document.addEventListener('alpine:init', () => {
     lightboxIndex: 0,
 
     get details() {
-      let d = Alpine.store('app')._routeParams.details;
-      if (d && d.name) return d;
-      // Fallback: look up from hash-based navigation (e.g. #species/flora-123)
-      const hash = window.location.hash;
-      const match = hash.match(/#species\/(.+)/);
-      if (match) {
-        const id = match[1];
+      const stored = Alpine.store('app').currentDetail;
+      if (stored && stored.name) return stored;
+      const id = this.$params && this.$params.id;
+      if (id) {
         const data = Alpine.store('app').data;
         if (data && data['flora&fauna'] && data['flora&fauna'][id]) {
           return data['flora&fauna'][id];
@@ -79,10 +76,10 @@ document.addEventListener('alpine:init', () => {
     },
 
     goToLocation(locationId) {
-      Alpine.store('app').navigate('map', { hash: '#map' });
+      this.$router.navigate('/');
       setTimeout(() => {
         Alpine.store('app').openCallout(locationId);
-      }, 100);
+      }, 200);
     }
   }));
 });
