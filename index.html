@@ -52,7 +52,7 @@
     </header>
 
     <!-- CONTENT AREA (below header) -->
-    <main class="pt-14 min-h-screen relative" style="padding-bottom: calc(4rem + env(safe-area-inset-bottom))">
+    <main class="pt-14 min-h-screen relative" style="padding-bottom: calc(3.5rem + env(safe-area-inset-bottom))">
 
       <!-- MAP — always rendered, position:absolute with fixed dimensions, never changes -->
       <div id="route-map"></div>
@@ -77,27 +77,27 @@
     </main>
 
     <!-- TAB BAR -->
-    <nav class="fixed bottom-0 left-0 right-0 h-14 bg-white border-t border-gray-200 flex items-stretch z-30" style="padding-bottom: env(safe-area-inset-bottom)">
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex items-stretch z-30" style="padding-bottom: env(safe-area-inset-bottom)">
       <a href="#map" @click.prevent="$store.app.navigate('map', '#map')"
-         class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
+         class="h-14 flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
          :class="$store.app.currentRoute === 'map' || $store.app.currentRoute === 'overview' ? 'text-blue-500' : 'text-gray-400'">
         <span class="material-icons text-[22px]">map</span>
         <span class="text-[10px] leading-tight font-medium">Map</span>
       </a>
       <a href="#catalog" @click.prevent="$store.app.navigate('catalog', '#catalog')"
-         class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
+         class="h-14 flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
          :class="$store.app.currentRoute === 'catalog' || $store.app.currentRoute === 'species' ? 'text-blue-500' : 'text-gray-400'">
         <span class="material-icons text-[22px]">collections_bookmark</span>
         <span class="text-[10px] leading-tight font-medium">Catalog</span>
       </a>
       <a href="#history" @click.prevent="$store.app.navigate('history', '#history')"
-         class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
+         class="h-14 flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
          :class="$store.app.currentRoute === 'history' ? 'text-blue-500' : 'text-gray-400'">
         <span class="material-icons text-[22px]">photo_library</span>
         <span class="text-[10px] leading-tight font-medium">History</span>
       </a>
       <a href="#info" @click.prevent="$store.app.navigate('info', '#info')"
-         class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
+         class="h-14 flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
          :class="$store.app.currentRoute === 'info' ? 'text-blue-500' : 'text-gray-400'">
         <span class="material-icons text-[22px]">info</span>
         <span class="text-[10px] leading-tight font-medium">Info</span>
