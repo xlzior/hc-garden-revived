@@ -35,9 +35,12 @@ document.addEventListener('alpine:init', () => {
 
     onImageLoad(e) {
       const el = e.target;
-      this.imageWidth = el.offsetWidth;
-      this.imageHeight = el.offsetHeight;
-      this.imageLoaded = true;
+      this.imageLoaded = false;
+      requestAnimationFrame(() => {
+        this.imageWidth = el.offsetWidth;
+        this.imageHeight = el.offsetHeight;
+        this.imageLoaded = true;
+      });
     },
 
     getDetails(pointName) {
