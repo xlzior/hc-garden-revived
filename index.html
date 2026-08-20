@@ -60,19 +60,19 @@
       <div id="route-map-cover"></div>
 
       <!-- OVERVIEW -->
-      <div x-show="$store.app.currentRoute === 'overview'" x-transition.opacity id="route-overview" class="relative z-20 bg-white" style="min-height: calc(100vh - 56px - 56px - env(safe-area-inset-bottom))"></div>
+      <div x-show="$store.app.currentRoute === 'overview'" id="route-overview" class="relative z-20 bg-white" style="min-height: calc(100vh - 56px - 56px - env(safe-area-inset-bottom))"></div>
 
       <!-- CATALOG (Flora and Fauna) -->
-      <div x-show="$store.app.currentRoute === 'catalog'" x-transition.opacity id="route-catalog" class="relative z-20"></div>
+      <div x-show="$store.app.currentRoute === 'catalog'" id="route-catalog" class="relative z-20 bg-white"></div>
 
       <!-- SPECIES DETAIL -->
-      <div x-show="$store.app.currentRoute === 'species'" x-transition.opacity id="route-species" class="relative z-20"></div>
+      <div x-show="$store.app.currentRoute === 'species'" id="route-species" class="relative z-20 bg-white"></div>
 
       <!-- HISTORICAL PHOTOS -->
-      <div x-show="$store.app.currentRoute === 'history'" x-transition.opacity id="route-history" class="relative z-20"></div>
+      <div x-show="$store.app.currentRoute === 'history'" id="route-history" class="relative z-20 bg-white"></div>
 
       <!-- INFO (Acknowledgements + References) -->
-      <div x-show="$store.app.currentRoute === 'info'" x-transition.opacity id="route-info" class="relative z-20"></div>
+      <div x-show="$store.app.currentRoute === 'info'" id="route-info" class="relative z-20 bg-white"></div>
 
     </main>
 
