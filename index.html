@@ -52,7 +52,7 @@
     </header>
 
     <!-- CONTENT AREA (below header) -->
-    <main class="mt-14 relative overflow-hidden box-border" style="height: calc(100vh - 56px - 56px - env(safe-area-inset-bottom))">
+    <main class="mt-14 relative overflow-hidden box-border" style="height: calc(100dvh - 56px - 56px - env(safe-area-inset-bottom))">
 
       <!-- MAP — always rendered, position:absolute with fixed dimensions, never changes -->
       <div id="route-map"></div>
@@ -60,7 +60,7 @@
       <div id="route-map-cover"></div>
 
       <!-- OVERVIEW -->
-      <div x-show="$store.app.currentRoute === 'overview'" id="route-overview" class="relative z-20 bg-white" style="min-height: calc(100vh - 56px - 56px - env(safe-area-inset-bottom))"></div>
+      <div x-show="$store.app.currentRoute === 'overview'" id="route-overview" class="relative z-20 bg-white" style="min-height: calc(100dvh - 56px - 56px - env(safe-area-inset-bottom))"></div>
 
       <!-- CATALOG (Flora and Fauna) -->
       <div x-show="$store.app.currentRoute === 'catalog'" id="route-catalog" class="relative z-20 bg-white h-full overflow-y-auto"></div>
