@@ -40,6 +40,14 @@
   min-height: 100px;
 }
 
+.species-image .species-image-square {
+  aspect-ratio: 1;
+  background: #ededed;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .historical-image-container {
   background-color: #DBDBDB;
   width: 100%;

@@ -4,6 +4,12 @@ document.addEventListener('alpine:init', () => {
     lightboxOpen: false,
     lightboxImages: [],
     lightboxIndex: 0,
+    imageIndex: 0,
+    _swiped: false,
+
+    init() {
+      this.$watch('details', () => { this.imageIndex = 0; });
+    },
 
     get details() {
       let d = Alpine.store('app')._routeParams.details;
@@ -38,6 +44,12 @@ document.addEventListener('alpine:init', () => {
       return this.details.imageRef || [];
     },
 
+    get images() {
+      const ref = this.imageRef;
+      if (!ref) return [];
+      return Array.isArray(ref) ? ref : [ref];
+    },
+
     get locations() {
       return this.details.locations || '';
     },
@@ -67,6 +79,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     closeLightbox() {
+      if (this._swiped) return;
       this.lightboxOpen = false;
     },
 
@@ -76,6 +89,69 @@ document.addEventListener('alpine:init', () => {
 
     nextImage() {
       if (this.lightboxIndex < this.lightboxImages.length - 1) this.lightboxIndex++;
+    },
+
+    _setupSwipe(el, onSwipe) {
+      if (!el) return;
+      let startX = 0, startY = 0, locked = null, dx = 0;
+
+      const onTouchStart = (e) => {
+        const t = e.touches[0];
+        startX = t.clientX;
+        startY = t.clientY;
+        locked = null;
+        dx = 0;
+      };
+
+      const onTouchMove = (e) => {
+        const t = e.touches[0];
+        const deltaX = t.clientX - startX;
+        const deltaY = t.clientY - startY;
+
+        if (!locked && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
+          locked = Math.abs(deltaX) > Math.abs(deltaY) ? 'h' : 'v';
+        }
+
+        if (locked === 'v') return;
+
+        if (locked === 'h') {
+          e.preventDefault();
+          dx = deltaX;
+        }
+      };
+
+      const onTouchEnd = () => {
+        onSwipe(dx);
+        locked = null;
+        dx = 0;
+      };
+
+      el.addEventListener('touchstart', onTouchStart, { passive: true });
+      el.addEventListener('touchmove', onTouchMove, { passive: false });
+      el.addEventListener('touchend', onTouchEnd, { passive: true });
+    },
+
+    initInlineSwipe() {
+      this._setupSwipe(this.$refs.inlineImageContainer, (dx) => {
+        if (Math.abs(dx) > 50) {
+          if (dx < 0 && this.imageIndex < this.images.length - 1) {
+            this.imageIndex++;
+          } else if (dx > 0 && this.imageIndex > 0) {
+            this.imageIndex--;
+          }
+        }
+      });
+    },
+
+    initLightboxSwipe() {
+      this._setupSwipe(this.$refs.lightboxContainer, (dx) => {
+        if (Math.abs(dx) > 50) {
+          this._swiped = true;
+          if (dx < 0) this.nextImage();
+          else if (dx > 0) this.prevImage();
+          setTimeout(() => { this._swiped = false; }, 50);
+        }
+      });
     },
 
     goToLocation(locationId) {
