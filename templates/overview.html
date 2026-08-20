@@ -2,7 +2,7 @@
   <div class="overflow-hidden">
     <template x-if="imageUrl">
       <div class="overview-image-square relative" style="width:100%;" x-ref="overviewContainer">
-        <img :src="imageUrl" class="absolute inset-0 w-full h-full object-cover blur-xl scale-110" aria-hidden="true">
+        <img :src="blurImageUrl" class="absolute inset-0 w-full h-full object-cover blur-xl scale-110" aria-hidden="true">
         <div class="absolute" :style="imageBoundsStyle">
           <img :src="imageUrl" :alt="title" class="w-full h-full object-contain" @load="onImageLoad($event)">
           <template x-if="imageLoaded">

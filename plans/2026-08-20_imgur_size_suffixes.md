@@ -6,6 +6,8 @@ Implement the `convertImgurURL` function (documented in `data.md` but never buil
 ## Approach
 Add `convertImgurURL(url, size)` to `utils.js` and apply it at every image consumption point with context-appropriate size suffixes.
 
+**Key principle:** Apply suffixes at the *consumer*, not when storing data. Raw URLs in `_routeParams` stay unsuffixed so consumers can choose their own size without double-suffix bugs.
+
 ### Size suffix reference (from `data.md`)
 | Suffix | Max px | Use case |
 |--------|--------|----------|
@@ -23,42 +25,61 @@ Insert suffix before extension: `https://i.imgur.com/fBW1mmI.jpg` → `https://i
 ```js
 function convertImgurURL(url, size) {
   if (!url || typeof url !== 'string' || !size) return url;
-  const ext = url.slice(url.lastIndexOf('.'));
-  return url.slice(0, url.length - ext.length) + size + ext;
+  if (!url.includes('imgur.com')) return url;
+  const dotIndex = url.lastIndexOf('.');
+  if (dotIndex === -1) return url;
+  const ext = url.slice(dotIndex);
+  return url.slice(0, dotIndex) + size + ext;
 }
 ```
+Guards: returns original for non-Imgur URLs, no-extension URLs, null/undefined.
 
 ### 2. `js/components/ff-list.js:124-128` — Catalog thumbnails → `m`
 Update `getImageSrc()` to return `convertImgurURL(src, 'm')`.
 
 ### 3. `js/components/ff-entry.js:47-51` — Species detail images → `h`
-Update `images` getter to map through `convertImgurURL(url, 'h')`.
+Update `images` getter to map raw `imageRef` through `convertImgurURL(url, 'h')`.
 
-### 4. `templates/species.html:9` — Blur placeholder → `m`
-Change `:src="images[imageIndex]"` on the blur img to use a separate `blurImages` getter returning `m`-sized URLs.
+### 4. `js/components/ff-entry.js` — Add `blurImages` getter → `m`
+Add a new getter that maps **raw `imageRef`** (not `images`) through `convertImgurURL(url, 'm')`.
 
-### 5. `templates/species.html:53` — Lightbox → full res
-No change — lightbox already uses `lightboxImages` which is set from raw `imageRef`.
+### 5. `templates/species.html:9` — Blur placeholder → `m`
+Change `:src="images[imageIndex]"` on the blur img to `:src="blurImages[imageIndex]"`.
 
-### 6. `js/app.js:144-152` — Overview annotated image → `h`
-Wrap `route.imageRef` with `convertImgurURL(url, 'h')` in `_resolveOverviewParams`.
+### 6. `templates/species.html:53` — Lightbox → full res
+No change — lightbox uses `lightboxImages` which is set from raw `imageRef` in `openLightbox()`.
 
-### 7. `templates/overview.html:5` — Overview blur placeholder → `m`
-Add a `blurImageUrl` getter to `clickable-image.js` that returns `convertImgurURL(imageUrl, 'm')`, use it on the blur `<img>`.
+### 7. `js/components/clickable-image.js:19-21` — Overview images → apply at consumer
+**Do NOT modify `_resolveOverviewParams`** — keep `_routeParams.url` as the raw URL.
 
-### 8. `templates/history.html:9` — Historical photos → `h`
+Instead, update `clickableImage`:
+- `imageUrl` getter: return `convertImgurURL(this.params.url, 'h')`
+- Add `blurImageUrl` getter: return `convertImgurURL(this.params.url, 'm')`
+
+This avoids the double-suffix bug where step 6 would produce `XXXh.jpg` and step 7 would then produce `XXXhm.jpg`.
+
+### 8. `templates/overview.html:5` — Blur placeholder → use `blurImageUrl`
+Change `:src="imageUrl"` on the blur img to `:src="blurImageUrl"`.
+
+### 9. `templates/history.html:9` — Historical photos → `h`
 Change `:src="entry.imageRef"` to `:src="convertImgurURL(entry.imageRef, 'h')"` (global function, accessible in Alpine templates).
 
-### 9. `js/map.js:72` — Trail popup thumbnail → `m`
+### 10. `js/map.js:72` — Trail popup thumbnail → `m`
 Wrap `thumbUrl` with `convertImgurURL(thumbUrl, 'm')`.
 
-### 10. `js/map.js:116` — Bird markers → `b`
+### 11. `js/map.js:116` — Bird markers → `b`
 Wrap `birdImg` with `convertImgurURL(birdImg, 'b')`.
 
 ### Not changed
 - **`smallImage`** icons — already small pre-computed thumbnails
 - **Lightbox** — full resolution for zoom quality
 - **`rewriteUrls()`** — remains dead code (separate concern)
+
+## Service worker
+No cache version bump needed — the SW uses cache-first for Imgur URLs, and new suffixed URLs are simply new cache entries. Old full-res entries will be evicted naturally or on next `hc-garden-v*` version bump.
+
+## Caveats
+- **Overview hotspot alignment**: Hotspot coordinates in `data.json` may have been authored against full-res dimensions. With `h` (1024px), positions could shift slightly on very tall/narrow images. Verify visually after implementation.
 
 ## Expected impact
 - Catalog list: ~80% smaller per thumbnail (1200KB → ~80KB)

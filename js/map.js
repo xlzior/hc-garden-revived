@@ -69,7 +69,7 @@ document.addEventListener('alpine:init', () => {
           let { title, latitude, longitude, imageRef } = route;
           if (!latitude || !longitude) continue;
 
-          let thumbUrl = imageRef || '';
+          let thumbUrl = convertImgurURL(imageRef, 'm') || '';
           let marker = L.marker([latitude, longitude], {
             icon: L.divIcon({
               className: 'trail-marker',
@@ -113,7 +113,7 @@ document.addEventListener('alpine:init', () => {
         let { name, latitude, longitude, area, imageRef } = details;
         if (!latitude || !longitude) continue;
 
-        let birdImg = Array.isArray(imageRef) ? imageRef[0] : imageRef;
+        let birdImg = convertImgurURL(Array.isArray(imageRef) ? imageRef[0] : imageRef, 'b');
 
         let marker = L.marker([latitude, longitude], {
           icon: L.divIcon({

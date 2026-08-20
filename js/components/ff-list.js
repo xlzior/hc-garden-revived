@@ -123,8 +123,8 @@ document.addEventListener('alpine:init', () => {
 
     getImageSrc(imageRef) {
       if (!imageRef) return '';
-      if (Array.isArray(imageRef)) return imageRef[0] || '';
-      return imageRef;
+      const src = Array.isArray(imageRef) ? (imageRef[0] || '') : imageRef;
+      return convertImgurURL(src, 'm');
     },
 
     getFaunaDisplay() {

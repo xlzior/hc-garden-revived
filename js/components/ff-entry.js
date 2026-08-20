@@ -47,7 +47,15 @@ document.addEventListener('alpine:init', () => {
     get images() {
       const ref = this.imageRef;
       if (!ref) return [];
-      return Array.isArray(ref) ? ref : [ref];
+      const arr = Array.isArray(ref) ? ref : [ref];
+      return arr.map(url => convertImgurURL(url, 'h'));
+    },
+
+    get blurImages() {
+      const ref = this.imageRef;
+      if (!ref) return [];
+      const arr = Array.isArray(ref) ? ref : [ref];
+      return arr.map(url => convertImgurURL(url, 'm'));
     },
 
     get locations() {

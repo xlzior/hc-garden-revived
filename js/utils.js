@@ -38,6 +38,15 @@ function formatSciName(sciname) {
   return html.trim();
 }
 
+function convertImgurURL(url, size) {
+  if (!url || typeof url !== 'string' || !size) return url;
+  if (!url.includes('imgur.com')) return url;
+  const dotIndex = url.lastIndexOf('.');
+  if (dotIndex === -1) return url;
+  const ext = url.slice(dotIndex);
+  return url.slice(0, dotIndex) + size + ext;
+}
+
 function rewriteUrls(data) {
   if (!data) return;
   const rewrite = (url) => {

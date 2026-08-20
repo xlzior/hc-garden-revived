@@ -17,7 +17,11 @@ document.addEventListener('alpine:init', () => {
     },
 
     get imageUrl() {
-      return this.params.url || '';
+      return convertImgurURL(this.params.url, 'h');
+    },
+
+    get blurImageUrl() {
+      return convertImgurURL(this.params.url, 'm');
     },
 
     get points() {

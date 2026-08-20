@@ -6,7 +6,7 @@
         <div>
           <div class="species-image-square relative overflow-hidden cursor-pointer" x-ref="inlineImageContainer"
                x-init="$nextTick(() => initInlineSwipe())" @click="openLightbox(imageIndex)">
-            <img :src="images[imageIndex]" class="absolute inset-0 w-full h-full object-cover blur-xl scale-110" aria-hidden="true">
+            <img :src="blurImages[imageIndex]" class="absolute inset-0 w-full h-full object-cover blur-xl scale-110" aria-hidden="true">
             <img :src="images[imageIndex]" :alt="name" class="relative w-full h-full object-contain" loading="lazy" @error="$event.target.style.display='none'">
           </div>
           <template x-if="images.length > 1">

@@ -6,7 +6,7 @@
     <template x-for="(entry, key) in $store.app.data.historical" :key="key">
       <div class="mb-2">
         <div class="historical-image-container">
-          <img :src="entry.imageRef" :alt="entry.description || 'Historical photo'" class="w-full" :width="entry.width" :height="entry.height" loading="lazy" @error="$event.target.style.display='none'">
+          <img :src="convertImgurURL(entry.imageRef, 'h')" :alt="entry.description || 'Historical photo'" class="w-full" :width="entry.width" :height="entry.height" loading="lazy" @error="$event.target.style.display='none'">
         </div>
         <template x-if="entry.description">
           <div class="p-5">
