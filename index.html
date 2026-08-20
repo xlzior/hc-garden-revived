@@ -38,6 +38,11 @@
 
     <!-- HEADER BAR -->
     <header class="fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-200 flex items-center justify-center px-4 z-30">
+      <template x-if="$store.app.currentRoute === 'overview' || $store.app.currentRoute === 'species'">
+        <button @click="history.back()" class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-800">
+          <span class="material-icons">arrow_back</span>
+        </button>
+      </template>
       <h1 class="text-base font-medium text-gray-700" x-text="$store.app.headerTitle"></h1>
       <template x-if="$store.app.showFilter">
         <button @click="$dispatch('open-filter-modal')" class="absolute right-4 p-2 text-gray-600 hover:text-gray-800">
