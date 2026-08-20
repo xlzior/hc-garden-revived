@@ -155,7 +155,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     goToLocation(locationId) {
-      Alpine.store('app').navigate('map', { hash: '#map' });
+      Alpine.store('app').navigate('map', '#map');
       setTimeout(() => {
         Alpine.store('app').openCallout(locationId);
       }, 100);

@@ -97,16 +97,7 @@ document.addEventListener('alpine:init', () => {
         const data = Alpine.store('app').data;
         const route = data['map'][trailId]?.route[routeId];
         if (!route) return;
-        Alpine.store('app').navigate('overview', {
-          title: route.title,
-          url: route.imageRef,
-          points: (route.points || []).map(p => ({
-            ...p,
-            ...(p.params || {}),
-            name: p.params ? p.params.name : undefined
-          })),
-          hash: '#map/overview/' + trailId + '/' + routeId
-        });
+        Alpine.store('app').navigate('overview', '#map/overview/' + trailId + '/' + routeId);
       });
     },
 
@@ -163,7 +154,7 @@ document.addEventListener('alpine:init', () => {
           });
           polygon._birdId = id;
           polygon.on('click', () => {
-            Alpine.store('app').navigate('species', { details, hash: '#species/' + id });
+            Alpine.store('app').navigate('species', '#species/' + id);
           });
           this._polygons[id] = polygon;
         }

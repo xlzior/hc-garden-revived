@@ -36,8 +36,8 @@ window.addEventListener('popstate', () => this._handleHash());
 
 Use `popstate` instead of `hashchange` because:
 - `popstate` fires on back/forward (the primary use case)
-- `popstate` fires when `location.hash` is set directly (programmatic navigation)
 - `popstate` does NOT fire when `pushState` is called (we handle that separately in `navigate()`)
+- `hashchange` does NOT fire after `pushState` either — it only fires when `location.hash` is set directly
 
 **Simplify `navigate()`** to only change the URL and trigger state derivation:
 ```js
@@ -68,13 +68,22 @@ navigate(screen, hash) {
 
 `navigate()` no longer sets any state directly. It pushes a URL, then calls `_handleHash()` to derive everything. `_handleHash()` is now the **single state derivation function** for all navigation — programmatic, back/forward, and initial load.
 
-**Remove `getHeaderTitle` dependency** — inline the header title logic in `_handleHash()`:
+**Remove `getHeaderTitle` dependency** — inline the header title logic in `_handleHash()`. **Resolve functions MUST run first** so `_routeParams` is populated before deriving the title:
 ```js
 _handleHash() {
   const hash = window.location.hash || '#map';
   const parsed = parseRoute(hash);
   this.currentRoute = parsed.screen;
-  // Derive header title from parsed route + resolved params
+  this.showFilter = (parsed.screen === 'map' || parsed.screen === 'catalog');
+  this._setMapVisible(parsed.screen === 'map' || parsed.screen === 'overview');
+  // Resolve params FIRST — these populate _routeParams and set headerTitle
+  if (parsed.screen === 'overview') {
+    this._resolveOverviewParams(parsed);
+  }
+  if (parsed.screen === 'species') {
+    this._resolveSpeciesParams(parsed);
+  }
+  // Then derive header title from resolved params (or fallback to static titles)
   if (parsed.screen === 'overview' && this._routeParams.title) {
     this.headerTitle = this._routeParams.title;
   } else if (parsed.screen === 'species' && this._routeParams.details?.name) {
@@ -82,18 +91,12 @@ _handleHash() {
   } else {
     this.headerTitle = HEADER_TITLES[parsed.screen] || parsed.screen;
   }
-  this.showFilter = (parsed.screen === 'map' || parsed.screen === 'catalog');
-  this._setMapVisible(parsed.screen === 'map' || parsed.screen === 'overview');
-  if (parsed.screen === 'overview') {
-    this._resolveOverviewParams(parsed);
-  }
-  if (parsed.screen === 'species') {
-    this._resolveSpeciesParams(parsed);
-  }
 },
 ```
 
 **Remove `getHeaderTitle()` function** from `js/utils.js` (lines 115-135). The logic is now inlined in `_handleHash()`. The function was only called from `_handleHash()` and its object-form branch was dead code.
+
+**Remove `this.headerTitle = ...`** from `_resolveOverviewParams` (line 159) and `_resolveSpeciesParams` (line 167). `_handleHash()` now derives `headerTitle` after calling these functions, so the resolve functions only need to populate `_routeParams`.
 
 ### 2. Update callers of `navigate()` — pass hash instead of params object
 

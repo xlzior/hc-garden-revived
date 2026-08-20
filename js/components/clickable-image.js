@@ -49,7 +49,7 @@ document.addEventListener('alpine:init', () => {
     viewSpecies(pointName) {
       let details = this.getDetails(pointName);
       if (!details) return;
-      Alpine.store('app').navigate('species', { details, hash: '#species/' + pointName });
+      Alpine.store('app').navigate('species', '#species/' + pointName);
     },
 
     getHotspotStyle(point) {

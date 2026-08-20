@@ -63,7 +63,7 @@ document.addEventListener('alpine:init', () => {
         top: '56px',
         left: '0',
         width: '100%',
-        height: 'calc(100vh - 56px - 56px)',
+        height: 'calc(100vh - 56px - 56px - env(safe-area-inset-bottom))',
         zIndex: '0'
       });
       var coverEl = document.getElementById('route-map-cover');
@@ -72,21 +72,20 @@ document.addEventListener('alpine:init', () => {
         top: '56px',
         left: '0',
         width: '100%',
-        height: 'calc(100vh - 56px - 56px)',
+        height: 'calc(100vh - 56px - 56px - env(safe-area-inset-bottom))',
         background: 'white',
         zIndex: '1',
         transition: 'opacity 0.2s ease'
       });
       this._mapHidden = true;
       this._handleHash();
-      window.addEventListener('hashchange', () => this._handleHash());
+      window.addEventListener('popstate', () => this._handleHash());
     },
 
     _handleHash() {
       const hash = window.location.hash || '#map';
       const parsed = parseRoute(hash);
       this.currentRoute = parsed.screen;
-      this.headerTitle = getHeaderTitle(parsed.screen, this);
       this.showFilter = (parsed.screen === 'map' || parsed.screen === 'catalog');
       this._setMapVisible(parsed.screen === 'map' || parsed.screen === 'overview');
       if (parsed.screen === 'overview') {
@@ -95,23 +94,18 @@ document.addEventListener('alpine:init', () => {
       if (parsed.screen === 'species') {
         this._resolveSpeciesParams(parsed);
       }
+      if (parsed.screen === 'overview' && this._routeParams.title) {
+        this.headerTitle = this._routeParams.title;
+      } else if (parsed.screen === 'species' && this._routeParams.details?.name) {
+        this.headerTitle = this._routeParams.details.name;
+      } else {
+        this.headerTitle = HEADER_TITLES[parsed.screen] || parsed.screen;
+      }
     },
 
-    navigate(screen, params) {
-      this._routeParams = params || {};
-      if (screen === 'species' && params && params.details) {
-        this.headerTitle = params.details.name;
-      } else if (screen === 'overview' && params && params.title) {
-        this.headerTitle = params.title;
-      } else {
-        this.headerTitle = HEADER_TITLES[screen] || screen;
-      }
-      this.currentRoute = screen;
-      this.showFilter = (screen === 'map' || screen === 'catalog');
-      this._setMapVisible(screen === 'map' || screen === 'overview');
-      if (params && params.hash) {
-        window.history.pushState(null, '', params.hash);
-      }
+    navigate(screen, hash) {
+      window.history.pushState(null, '', hash);
+      this._handleHash();
     },
 
     saveMarkers(markers) {
@@ -156,7 +150,6 @@ document.addEventListener('alpine:init', () => {
             name: p.params ? p.params.name : undefined
           }))
         };
-        this.headerTitle = route.title;
       }
     },
 
@@ -164,7 +157,6 @@ document.addEventListener('alpine:init', () => {
       const { id } = parsed;
       if (id && this.data && this.data['flora&fauna'] && this.data['flora&fauna'][id]) {
         this._routeParams = { details: this.data['flora&fauna'][id] };
-        this.headerTitle = this.data['flora&fauna'][id].name || '';
       }
     }
   });

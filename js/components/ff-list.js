@@ -136,7 +136,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     viewSpecies(details) {
-      Alpine.store('app').navigate('species', { details, hash: '#species/' + details.id });
+      Alpine.store('app').navigate('species', '#species/' + details.id);
     },
 
     openFilterModal() {

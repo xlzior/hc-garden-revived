@@ -111,25 +111,3 @@ const HEADER_TITLES = {
   'history': 'Historical Photos',
   'info': 'Info'
 };
-
-function getHeaderTitle(route, data) {
-  if (typeof route === 'string') {
-    if (route === 'overview' && data && data._routeParams && data._routeParams.title) {
-      return data._routeParams.title;
-    }
-    if (route === 'species' && data && data._routeParams && data._routeParams.details) {
-      return data._routeParams.details.name;
-    }
-    return HEADER_TITLES[route] || route;
-  }
-  if (typeof route === 'object') {
-    if (route.screen === 'overview' && route._routeParams && route._routeParams.title) {
-      return route._routeParams.title;
-    }
-    if (route.screen === 'species' && route._routeParams && route._routeParams.details) {
-      return route._routeParams.details.name;
-    }
-    return HEADER_TITLES[route.screen] || route.screen;
-  }
-  return '';
-}
