@@ -5,6 +5,8 @@ document.addEventListener('alpine:init', () => {
     imageWidth: 0,
     imageHeight: 0,
     _lastUrl: '',
+    _imgEl: null,
+    imageBoundsStyle: {},
 
     get params() {
       return Alpine.store('app')._routeParams || {};
@@ -29,18 +31,37 @@ document.addEventListener('alpine:init', () => {
           this.imageLoaded = false;
           this.imageWidth = 0;
           this.imageHeight = 0;
+          this.imageBoundsStyle = {};
         }
       });
     },
 
     onImageLoad(e) {
-      const el = e.target;
-      this.imageLoaded = false;
-      requestAnimationFrame(() => {
-        this.imageWidth = el.offsetWidth;
-        this.imageHeight = el.offsetHeight;
-        this.imageLoaded = true;
-      });
+      this._imgEl = e.target;
+      this._computeImageBounds();
+      const ro = new ResizeObserver(() => this._computeImageBounds());
+      ro.observe(this.$refs.overviewContainer);
+    },
+
+    _computeImageBounds() {
+      if (!this._imgEl || !this.$refs.overviewContainer) return;
+      const cw = this.$refs.overviewContainer.offsetWidth;
+      const ch = this.$refs.overviewContainer.offsetHeight;
+      const nw = this._imgEl.naturalWidth;
+      const nh = this._imgEl.naturalHeight;
+      if (!nw || !nh) return;
+      const scale = Math.min(cw / nw, ch / nh);
+      const w = nw * scale;
+      const h = nh * scale;
+      this.imageWidth = w;
+      this.imageHeight = h;
+      this.imageBoundsStyle = {
+        width: w + 'px',
+        height: h + 'px',
+        top: ((ch - h) / 2) + 'px',
+        left: ((cw - w) / 2) + 'px'
+      };
+      this.imageLoaded = true;
     },
 
     getDetails(pointName) {

@@ -49,8 +49,9 @@
 }
 
 .overview-image-square {
-  aspect-ratio: 1;
+  height: calc(100vh - 56px - 56px - env(safe-area-inset-bottom));
   background: #ededed;
+  overflow: hidden;
 }
 
 .historical-image-container {

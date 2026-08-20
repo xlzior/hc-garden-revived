@@ -1,22 +1,26 @@
 <div x-data="clickableImage">
   <div class="overflow-hidden">
     <template x-if="imageUrl">
-      <div class="overview-image-square relative" style="width:100%;">
+      <div class="overview-image-square relative" style="width:100%;" x-ref="overviewContainer">
         <img :src="imageUrl" class="absolute inset-0 w-full h-full object-cover blur-xl scale-110" aria-hidden="true">
-        <img :src="imageUrl" :alt="title" class="relative w-full h-full object-contain" @load="onImageLoad($event)">
-        <div x-show="imageLoaded">
-        <template x-for="(point, index) in points" :key="index">
-          <div x-show="point.name && point.name !== 'MISSING INFO'">
-            <template x-if="point.name && point.name.includes('fauna')">
-              <div :style="getHotspotStyle(point)" @click="viewSpecies(point.name)" class="cursor-pointer">
-                <img :src="getDetails(point.name)?.smallImage || ''" class="w-full h-full rounded-full border-2 border-white object-cover" @error="$event.target.style.display='none'">
+        <div class="absolute" :style="imageBoundsStyle">
+          <img :src="imageUrl" :alt="title" class="w-full h-full object-contain" @load="onImageLoad($event)">
+          <template x-if="imageLoaded">
+            <div>
+            <template x-for="(point, index) in points" :key="index">
+              <div x-show="point.name && point.name !== 'MISSING INFO'">
+                <template x-if="point.name && point.name.includes('fauna')">
+                  <div :style="getHotspotStyle(point)" @click="viewSpecies(point.name)" class="cursor-pointer">
+                    <img :src="getDetails(point.name)?.smallImage || ''" class="w-full h-full rounded-full border-2 border-white object-cover" @error="$event.target.style.display='none'">
+                  </div>
+                </template>
+                <template x-if="point.name && !point.name.includes('fauna')">
+                  <div :style="getFloraHotspotStyle(point)" @click="viewSpecies(point.name)" class="cursor-pointer"></div>
+                </template>
               </div>
             </template>
-            <template x-if="point.name && !point.name.includes('fauna')">
-              <div :style="getFloraHotspotStyle(point)" @click="viewSpecies(point.name)" class="cursor-pointer"></div>
-            </template>
-          </div>
-        </template>
+            </div>
+          </template>
         </div>
       </div>
     </template>
