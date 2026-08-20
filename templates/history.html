@@ -1,9 +1,8 @@
-<div>
-  <div class="p-5">
-    <p class="text-base text-gray-600 font-light text-justify mb-4">This page is dedicated for all alumni whom may be interested in the brief history of flora in Hwa Chong. Are you able to guess which years were these photos taken? </p>
-  </div>
-  <template x-if="$store.app.data">
-    <div>
+<div class="p-5">
+  <p class="text-base text-gray-600 font-light text-justify mb-4">This page is dedicated for all alumni whom may be interested in the brief history of flora in Hwa Chong. Are you able to guess which years were these photos taken? </p>
+</div>
+<template x-if="$store.app.data">
+  <div>
     <template x-for="(entry, key) in $store.app.data.historical" :key="key">
       <div class="mb-2">
         <div class="historical-image-container">
@@ -18,4 +17,3 @@
     </template>
   </div>
 </template>
-</div>

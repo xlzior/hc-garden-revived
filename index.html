@@ -47,51 +47,53 @@
     </header>
 
     <!-- CONTENT AREA (below header) -->
-    <main x-data="routeHandlers" class="pt-14 pb-16 min-h-screen relative">
+    <main class="pt-14 pb-16 min-h-screen relative">
 
-      <!-- MAP — always rendered, behind everything -->
-      <div id="route-map" x-data="mapLegend" class="absolute inset-0 z-0"></div>
+      <!-- MAP — always rendered, position:absolute with fixed dimensions, never changes -->
+      <div id="route-map"></div>
+      <!-- WHITE COVER — hides map when another tab is active, toggled imperatively -->
+      <div id="route-map-cover"></div>
 
-      <!-- WHITE BACKGROUND — hides map when not on map route -->
-      <div x-show="!$store.app.isMapRoute"
-           class="absolute inset-0 bg-white z-5"></div>
+      <!-- OVERVIEW -->
+      <div x-show="$store.app.currentRoute === 'overview'" x-transition.opacity id="route-overview" class="relative z-20"></div>
 
-      <!-- CONTENT — template content renders above map & background -->
-      <div class="relative z-10">
-        <template x-route="/" x-handler="handleMap"></template>
-        <template x-route="/map/overview/:trailId/:routeId" x-handler="handleOverview"></template>
-        <template x-route="/catalog" x-template="/templates/catalog.html" x-handler="handleCatalog"></template>
-        <template x-route="/species/:id" x-template="/templates/species.html" x-handler="handleSpecies"></template>
-        <template x-route="/history" x-template="/templates/history.html"></template>
-        <template x-route="/info" x-template="/templates/info.html"></template>
-        <template x-route="notfound" x-handler="handleNotFound"></template>
-      </div>
+      <!-- CATALOG (Flora and Fauna) -->
+      <div x-show="$store.app.currentRoute === 'catalog'" x-transition.opacity id="route-catalog" class="relative z-20"></div>
+
+      <!-- SPECIES DETAIL -->
+      <div x-show="$store.app.currentRoute === 'species'" x-transition.opacity id="route-species" class="relative z-20"></div>
+
+      <!-- HISTORICAL PHOTOS -->
+      <div x-show="$store.app.currentRoute === 'history'" x-transition.opacity id="route-history" class="relative z-20"></div>
+
+      <!-- INFO (Acknowledgements + References) -->
+      <div x-show="$store.app.currentRoute === 'info'" x-transition.opacity id="route-info" class="relative z-20"></div>
 
     </main>
 
     <!-- TAB BAR -->
     <nav class="fixed bottom-0 left-0 right-0 h-14 bg-white border-t border-gray-200 flex items-stretch z-30">
-      <a href="/"
+      <a href="#map" @click.prevent="$store.app.navigate('map', { hash: '#map' })"
          class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
-         :class="$store.app.isMapRoute ? 'text-blue-500' : 'text-gray-400'">
+         :class="$store.app.currentRoute === 'map' || $store.app.currentRoute === 'overview' ? 'text-blue-500' : 'text-gray-400'">
         <span class="material-icons text-[22px]">map</span>
         <span class="text-[10px] leading-tight font-medium">Map</span>
       </a>
-      <a href="/catalog"
+      <a href="#catalog" @click.prevent="$store.app.navigate('catalog', { hash: '#catalog' })"
          class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
-         :class="$router.context.path === '/catalog' || $router.context.path.startsWith('/species/') ? 'text-blue-500' : 'text-gray-400'">
+         :class="$store.app.currentRoute === 'catalog' || $store.app.currentRoute === 'species' ? 'text-blue-500' : 'text-gray-400'">
         <span class="material-icons text-[22px]">collections_bookmark</span>
         <span class="text-[10px] leading-tight font-medium">Catalog</span>
       </a>
-      <a href="/history"
+      <a href="#history" @click.prevent="$store.app.navigate('history', { hash: '#history' })"
          class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
-         :class="$router.context.path === '/history' ? 'text-blue-500' : 'text-gray-400'">
+         :class="$store.app.currentRoute === 'history' ? 'text-blue-500' : 'text-gray-400'">
         <span class="material-icons text-[22px]">photo_library</span>
         <span class="text-[10px] leading-tight font-medium">History</span>
       </a>
-      <a href="/info"
+      <a href="#info" @click.prevent="$store.app.navigate('info', { hash: '#info' })"
          class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
-         :class="$router.context.path === '/info' ? 'text-blue-500' : 'text-gray-400'">
+         :class="$store.app.currentRoute === 'info' ? 'text-blue-500' : 'text-gray-400'">
         <span class="material-icons text-[22px]">info</span>
         <span class="text-[10px] leading-tight font-medium">Info</span>
       </a>
@@ -158,7 +160,6 @@
   <script src="js/components/clickable-image.js"></script>
   <script src="js/leaflet.js"></script>
   <script src="js/map.js"></script>
-  <script src="js/pinecone-router.min.js"></script>
   <script defer src="js/alpine.min.js"></script>
   <script>
     if ('serviceWorker' in navigator) {

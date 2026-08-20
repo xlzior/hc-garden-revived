@@ -7,7 +7,7 @@ document.addEventListener('alpine:init', () => {
     _lastUrl: '',
 
     get params() {
-      return Alpine.store('app').overviewParams || {};
+      return Alpine.store('app')._routeParams || {};
     },
 
     get title() {
@@ -49,9 +49,7 @@ document.addEventListener('alpine:init', () => {
     viewSpecies(pointName) {
       let details = this.getDetails(pointName);
       if (!details) return;
-      Alpine.store('app').currentDetail = details;
-      Alpine.store('app').headerTitle = details.name || '';
-      this.$router.navigate('/species/' + pointName);
+      Alpine.store('app').navigate('species', { details, hash: '#species/' + pointName });
     },
 
     getHotspotStyle(point) {

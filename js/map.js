@@ -25,10 +25,10 @@ document.addEventListener('alpine:init', () => {
       if (!data || !data['map']) return;
       if (this._map) return;
 
-      const mapEl = document.getElementById('route-map');
+      const mapEl = document.getElementById('map');
       if (!mapEl) return;
 
-      this._map = L.map('route-map', {
+      this._map = L.map('map', {
         center: [1.326212, 103.805252],
         zoom: 16,
         minZoom: 15,
@@ -97,17 +97,16 @@ document.addEventListener('alpine:init', () => {
         const data = Alpine.store('app').data;
         const route = data['map'][trailId]?.route[routeId];
         if (!route) return;
-        Alpine.store('app').overviewParams = {
+        Alpine.store('app').navigate('overview', {
           title: route.title,
           url: route.imageRef,
           points: (route.points || []).map(p => ({
             ...p,
             ...(p.params || {}),
             name: p.params ? p.params.name : undefined
-          }))
-        };
-        Alpine.store('app').headerTitle = route.title;
-        window.location.hash = '/map/overview/' + trailId + '/' + routeId;
+          })),
+          hash: '#map/overview/' + trailId + '/' + routeId
+        });
       });
     },
 
@@ -164,9 +163,7 @@ document.addEventListener('alpine:init', () => {
           });
           polygon._birdId = id;
           polygon.on('click', () => {
-            Alpine.store('app').currentDetail = details;
-            Alpine.store('app').headerTitle = details.name || '';
-            window.location.hash = '/species/' + id;
+            Alpine.store('app').navigate('species', { details, hash: '#species/' + id });
           });
           this._polygons[id] = polygon;
         }
