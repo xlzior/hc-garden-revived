@@ -52,6 +52,9 @@ document.addEventListener('alpine:init', () => {
       this._renderBirds(data);
       this._renderLegend(data);
 
+      this._onResize = () => this._map.invalidateSize();
+      window.addEventListener('resize', this._onResize);
+
       setTimeout(() => this._map.invalidateSize(), 100);
     },
 
@@ -188,6 +191,7 @@ document.addEventListener('alpine:init', () => {
               .filter(m => m)
               .map(m => m.getLatLng());
             if (bounds.length > 0) {
+              this._map.invalidateSize();
               this._map.fitBounds(L.latLngBounds(bounds), { padding: [50, 50] });
             }
           }
