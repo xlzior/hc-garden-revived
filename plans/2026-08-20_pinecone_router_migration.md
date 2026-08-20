@@ -1,5 +1,18 @@
 # Plan: Migrate to Pinecone Router
 
+> **STATUS: ATTEMPTED AND BAILED**
+>
+> This migration was fully implemented and tested. It was reverted because Pinecone
+> Router's `x-template` injection model fundamentally conflicts with the persistent
+> Leaflet map requirement. Pinecone injects template content at fixed DOM positions
+> (after `<template>` tags), which sits underneath the map's z-index layer. Every fix
+> (cover divs, z-index layers, wrapper divs) created a new layout or stacking context
+> bug. The vendored build also auto-registers via its own `alpine:init` listener and
+> does not expose a `PineconeRouter` global, making plugin init timing unpredictable.
+>
+> **Going forward:** Write a minimal custom hash router (~40 lines) that gives full
+> control over the map lifecycle and doesn't fight Pinecone's template injection model.
+
 ## Motivation
 
 The current routing is entirely manual: `parseRoute()` pattern-matches hashes, `_handleHash()` sets store state, `navigate()` calls `pushState` + updates store, and `x-show` toggles visibility. This creates several problems:
