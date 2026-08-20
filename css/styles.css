@@ -134,7 +134,8 @@ img.onerror-fallback {
     height: 40px !important;
   }
   main {
-    padding-top: 40px !important;
+    margin-top: 40px !important;
+    height: calc(100vh - 40px - 56px - env(safe-area-inset-bottom)) !important;
   }
   #map-legend {
     max-height: 120px;

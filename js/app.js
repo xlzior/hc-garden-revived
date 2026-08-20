@@ -60,19 +60,19 @@ document.addEventListener('alpine:init', () => {
       var mapEl = document.getElementById('route-map');
       Object.assign(mapEl.style, {
         position: 'absolute',
-        top: '56px',
+        top: '0',
         left: '0',
         width: '100%',
-        height: 'calc(100vh - 56px - 56px - env(safe-area-inset-bottom))',
+        height: '100%',
         zIndex: '0'
       });
       var coverEl = document.getElementById('route-map-cover');
       Object.assign(coverEl.style, {
         position: 'absolute',
-        top: '56px',
+        top: '0',
         left: '0',
         width: '100%',
-        height: 'calc(100vh - 56px - 56px - env(safe-area-inset-bottom))',
+        height: '100%',
         background: 'white',
         zIndex: '1',
         transition: 'opacity 0.2s ease'
@@ -86,6 +86,9 @@ document.addEventListener('alpine:init', () => {
       const hash = window.location.hash || '#map';
       const parsed = parseRoute(hash);
       this.currentRoute = parsed.screen;
+      setTimeout(() => {
+        document.querySelector('main').scrollTop = 0;
+      }, 0);
       this.showFilter = (parsed.screen === 'map' || parsed.screen === 'catalog');
       this._setMapVisible(parsed.screen === 'map' || parsed.screen === 'overview');
       if (parsed.screen === 'overview') {
