@@ -1,8 +1,9 @@
 <div x-data="clickableImage">
   <div class="overflow-auto">
     <template x-if="imageUrl">
-      <div class="relative inline-block" style="width:100%;">
-        <img :src="imageUrl" :alt="title" class="w-full" @load="onImageLoad($event)">
+      <div class="overview-image-square relative" style="width:100%;">
+        <img :src="imageUrl" class="absolute inset-0 w-full h-full object-cover blur-xl scale-110" aria-hidden="true">
+        <img :src="imageUrl" :alt="title" class="relative w-full h-full object-contain" @load="onImageLoad($event)">
         <div x-show="imageLoaded">
         <template x-for="(point, index) in points" :key="index">
           <div x-show="point.name && point.name !== 'MISSING INFO'">

@@ -48,6 +48,11 @@
   -webkit-user-select: none;
 }
 
+.overview-image-square {
+  aspect-ratio: 1;
+  background: #ededed;
+}
+
 .historical-image-container {
   background-color: #DBDBDB;
   width: 100%;
